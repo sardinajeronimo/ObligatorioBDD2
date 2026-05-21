@@ -2,5 +2,10 @@
 *.swp
 .DS_Store
 *.zip
-.claude/
+
+# Claude Code local: ignorar todo excepto skills compartidas
+.claude/*
+!.claude/skills/
+
+# Scripts personales de testing local
 scripts/local/
