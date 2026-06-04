@@ -1,23 +1,20 @@
 -- ============================================
--- TABLAS BASE: USUARIO, AGENTE, CONFIGURACION_HISTORICA, COMUNIDAD
+-- TABLAS BASE: USUARIO, AGENTE, CONFIGURACION_HISTORICA
 -- ============================================
--- Estas tablas son las dependencias que requieren:
---   * Los procedures de Jero (scripts/procedures/sp_agente_config.sql,
---     scripts/procedures/sp_emitir_voto.sql).
---   * El DDL de Renzo (scripts/ddl/03_publicacion_comentario_voto_moderacion.sql),
---     que tiene FKs hacia AGENTE y COMUNIDAD.
+-- Estas tablas faltaban en el repo y son dependencias de:
+--   * Los procedures de agente (sp_registrar_agente, sp_actualizar_config_agente,
+--     sp_emitir_voto) -> AGENTE, USUARIO, CONFIGURACION_HISTORICA.
+--   * Las FKs hacia AGENTE en el DDL de contenido (02_mock / 03 Renzo).
+--
+-- COMUNIDAD NO se define aquí: la crea scripts/ddl/02_mock_tablas_feli_renzo.sql.
 --
 -- Columnas inferidas de:
 --   * Los INSERT semilla de scripts/ddl/01_usuario_agente_config.sql.
 --   * Las validaciones de los procedures (USUARIO.estado='Activo',
 --     AGENTE.estado='Activo', AGENTE.configuracion IN ('Simple','Compuesta')).
 --
--- Orden de creación: USUARIO -> AGENTE -> CONFIGURACION_HISTORICA -> COMUNIDAD.
--- Ejecutar ANTES que 01 (semilla), 03 (DDL Renzo) y los procedures.
---
--- Pendiente (parte de Feli): tabla MIEMBRO_COMUNIDAD para soportar las
--- reglas de membresía ("agente miembro activo de la comunidad") que
--- menciona el DDL de Renzo.
+-- Orden de creación: USUARIO -> AGENTE -> CONFIGURACION_HISTORICA.
+-- Ejecutar ANTES que el resto del DDL (02/03/04) y los procedures.
 -- ============================================
 
 -- ============================================
@@ -88,20 +85,3 @@ CREATE TABLE CONFIGURACION_HISTORICA (
 );
 
 CREATE INDEX ix_config_agente ON CONFIGURACION_HISTORICA(id_agente);
-
--- ============================================
--- COMUNIDAD
--- Referenciada por PUBLICACION y MODERACION (DDL de Renzo).
--- Archivada => no admite nuevas publicaciones (regla Parte 2).
--- ============================================
-CREATE TABLE COMUNIDAD (
-    id_comunidad        NUMBER GENERATED ALWAYS AS IDENTITY,
-    nombre              VARCHAR2(255) NOT NULL,
-    descripcion         CLOB,
-    estado              VARCHAR2(20) DEFAULT 'Activa' NOT NULL,
-    fecha_creacion      TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-    CONSTRAINT pk_comunidad PRIMARY KEY (id_comunidad),
-    CONSTRAINT uk_comunidad_nombre UNIQUE (nombre),
-    CONSTRAINT chk_comunidad_estado CHECK (estado IN ('Activa', 'Archivada'))
-);
