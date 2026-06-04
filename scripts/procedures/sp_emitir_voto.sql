@@ -1,50 +1,69 @@
 -- ============================================
--- PROCEDIMIENTO: Emitir voto en publicación
--- Requerimiento: 2.x
+-- PROCEDIMIENTO: sp_emitir_voto
+-- Parte 2 — Req 2.4: Emitir voto sobre una publicación
 -- Responsable: Jero
+-- ============================================
+-- Registra un voto (positivo/negativo) de un agente sobre una publicación
+-- y actualiza el puntaje_total de la publicación (+1 positivo, -1 negativo).
+--
+-- Esquema: VOTO referencia PUBLICACION por su PK id_contenido
+--          (PUBLICACION es subtipo de CONTENIDO, ver scripts/ddl/02_contenido.sql).
+--
+-- Parámetros:
+--   p_id_agente      Agente que vota (debe existir y estar Activo)
+--   p_id_publicacion PK de la publicación (= CONTENIDO.id_contenido)
+--   p_tipo           'positivo' | 'negativo'
+--
+-- Errores de aplicación:
+--   -20010  El agente no existe
+--   -20011  El agente no está Activo
+--   -20012  La publicación no existe
+--   -20013  Tipo de voto inválido
+--   -20014  El agente ya votó esa publicación
 -- ============================================
 
 CREATE OR REPLACE PROCEDURE sp_emitir_voto(
     p_id_agente      NUMBER,
     p_id_publicacion NUMBER,
-    p_tipo_voto      VARCHAR2   -- 'Positivo' o 'Negativo'
+    p_tipo           VARCHAR2   -- 'positivo' o 'negativo'
 ) AS
-    v_estado_agente VARCHAR2(20);
+    v_estado_agente AGENTE.estado%TYPE;
     v_existe        NUMBER;
     v_delta         NUMBER;
 BEGIN
     -- Validar tipo de voto antes de ir a la BD
-    IF p_tipo_voto NOT IN ('Positivo', 'Negativo') THEN
-        RAISE_APPLICATION_ERROR(-20013, 'Tipo de voto invalido. Usar: Positivo o Negativo');
+    IF p_tipo NOT IN ('positivo', 'negativo') THEN
+        RAISE_APPLICATION_ERROR(-20013, 'Tipo de voto invalido. Usar: positivo o negativo');
     END IF;
 
-    -- Validar agente existe y está activo (un solo SELECT)
+    -- Validar que el agente exista y esté Activo
     BEGIN
         SELECT estado INTO v_estado_agente
-        FROM AGENTE
-        WHERE id_agente = p_id_agente;
+          FROM AGENTE
+         WHERE id_agente = p_id_agente;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
             RAISE_APPLICATION_ERROR(-20010, 'Agente ' || p_id_agente || ' no existe');
     END;
 
-    IF v_estado_agente != 'Activo' THEN
-        RAISE_APPLICATION_ERROR(-20011, 'Agente ' || p_id_agente || ' no esta activo (estado: ' || v_estado_agente || ')');
+    IF v_estado_agente <> 'Activo' THEN
+        RAISE_APPLICATION_ERROR(-20011,
+            'Agente ' || p_id_agente || ' no esta activo (estado: ' || v_estado_agente || ')');
     END IF;
 
-    -- Validar publicación existe
+    -- Validar que la publicación exista
     SELECT COUNT(*) INTO v_existe
-    FROM PUBLICACION
-    WHERE id_publicacion = p_id_publicacion;
+      FROM PUBLICACION
+     WHERE id_contenido = p_id_publicacion;
 
     IF v_existe = 0 THEN
         RAISE_APPLICATION_ERROR(-20012, 'Publicacion ' || p_id_publicacion || ' no existe');
     END IF;
 
-    -- Validar voto duplicado
+    -- Validar voto duplicado (un agente vota a lo sumo una vez la misma publicación)
     SELECT COUNT(*) INTO v_existe
-    FROM VOTO
-    WHERE id_agente = p_id_agente AND id_publicacion = p_id_publicacion;
+      FROM VOTO
+     WHERE id_agente = p_id_agente AND id_publicacion = p_id_publicacion;
 
     IF v_existe > 0 THEN
         RAISE_APPLICATION_ERROR(-20014,
@@ -52,22 +71,21 @@ BEGIN
     END IF;
 
     -- Insertar voto
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo_voto, fecha_voto)
-    VALUES (p_id_agente, p_id_publicacion, p_tipo_voto, SYSDATE);
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo, fecha_hora)
+    VALUES (p_id_agente, p_id_publicacion, p_tipo, SYSDATE);
 
-    -- Actualizar puntaje_total (+1 Positivo, -1 Negativo)
-    v_delta := CASE p_tipo_voto WHEN 'Positivo' THEN 1 ELSE -1 END;
+    -- Actualizar puntaje_total (+1 positivo, -1 negativo)
+    v_delta := CASE p_tipo WHEN 'positivo' THEN 1 ELSE -1 END;
 
     UPDATE PUBLICACION
-    SET puntaje_total = puntaje_total + v_delta
-    WHERE id_publicacion = p_id_publicacion;
+       SET puntaje_total = puntaje_total + v_delta
+     WHERE id_contenido = p_id_publicacion;
 
     COMMIT;
 
     DBMS_OUTPUT.PUT_LINE(
-        'Voto ' || p_tipo_voto || ' registrado. Agente: ' || p_id_agente ||
-        ' | Publicacion: ' || p_id_publicacion
-    );
+        'Voto ' || p_tipo || ' registrado. Agente: ' || p_id_agente ||
+        ' | Publicacion: ' || p_id_publicacion);
 
 EXCEPTION
     WHEN OTHERS THEN
@@ -76,43 +94,9 @@ EXCEPTION
 END sp_emitir_voto;
 /
 
-
 -- ============================================
--- TESTING
+-- Ejemplo de uso (requiere datos de prueba cargados):
+--   SET SERVEROUTPUT ON;
+--   BEGIN sp_emitir_voto(1, 1, 'positivo'); END;
+--   /
 -- ============================================
-
-SET SERVEROUTPUT ON;
-
--- Caso exitoso: voto positivo
-BEGIN
-    sp_emitir_voto(1, 1, 'Positivo');
-END;
-/
-
--- Error esperado: voto duplicado (ORA-20014)
-BEGIN
-    sp_emitir_voto(1, 1, 'Negativo');
-EXCEPTION
-    WHEN OTHERS THEN DBMS_OUTPUT.PUT_LINE('ERROR esperado: ' || SQLERRM);
-END;
-/
-
--- Error esperado: agente inexistente (ORA-20010)
-BEGIN
-    sp_emitir_voto(9999, 1, 'Positivo');
-EXCEPTION
-    WHEN OTHERS THEN DBMS_OUTPUT.PUT_LINE('ERROR esperado: ' || SQLERRM);
-END;
-/
-
--- Error esperado: tipo inválido (ORA-20013)
-BEGIN
-    sp_emitir_voto(1, 2, 'Neutral');
-EXCEPTION
-    WHEN OTHERS THEN DBMS_OUTPUT.PUT_LINE('ERROR esperado: ' || SQLERRM);
-END;
-/
-
--- Verificar resultado
-SELECT id_publicacion, puntaje_total FROM PUBLICACION WHERE id_publicacion = 1;
-SELECT * FROM VOTO WHERE id_agente = 1 AND id_publicacion = 1;

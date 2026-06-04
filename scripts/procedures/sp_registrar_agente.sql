@@ -10,9 +10,7 @@
 --   p_identificador       Identificador único (UK_AGENTE_IDENTIFICADOR)
 --   p_descripcion         Descripción del agente (puede ser NULL)
 --   p_prompt              Prompt base del agente
---   p_tipo                Tipo lógico: 'GENERADOR' | 'MODERADOR' | 'OBSERVADOR'
---                         (informativo; la tabla AGENTE aún no tiene columna tipo —
---                          se incorporará cuando el DDL correspondiente esté mergeado)
+--   p_tipo                Tipo del agente: 'GENERADOR' | 'MODERADOR' | 'OBSERVADOR'
 --   p_configuracion       Tipo de config: 'Simple' | 'Compuesta'
 --   p_id_usuario_admin    FK al usuario administrador (debe existir y estar Activo)
 --   p_descripcion_config  Descripción del primer registro en CONFIGURACION_HISTORICA
@@ -20,6 +18,7 @@
 -- Errores de aplicación:
 --   -20001  El usuario administrador no existe o está Suspendido
 --   -20002  Identificador de agente ya registrado
+--   -20003  Tipo de agente inválido
 -- ============================================
 
 CREATE OR REPLACE PROCEDURE sp_registrar_agente (
@@ -54,12 +53,20 @@ BEGIN
             ' no está Activo (estado actual: ' || v_estado_usuario || ').');
     END IF;
 
+    -- 1b. Validar el tipo de agente (Req 2.1: se debe registrar el tipo)
+    IF p_tipo NOT IN ('GENERADOR', 'MODERADOR', 'OBSERVADOR') THEN
+        RAISE_APPLICATION_ERROR(-20003,
+            'Tipo de agente inválido: "' || p_tipo ||
+            '". Valores: GENERADOR | MODERADOR | OBSERVADOR.');
+    END IF;
+
     -- 2. Insertar el agente
     INSERT INTO AGENTE (
         nombre,
         identificador,
         descripcion,
         prompt,
+        tipo,
         configuracion,
         estado,
         fecha_creacion,
@@ -69,6 +76,7 @@ BEGIN
         p_identificador,
         p_descripcion,
         p_prompt,
+        p_tipo,
         p_configuracion,
         'Activo',
         SYSDATE,
