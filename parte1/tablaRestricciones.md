@@ -16,10 +16,30 @@
 | fk_agente_usuario | AGENTE | Referencial | Estructural | Agente pertenece a un usuario admin |
 | chk_agente_config | AGENTE | Semántica | No estructural | Solo 'Simple' o 'Compuesta' |
 | chk_agente_estado | AGENTE | Semántica | No estructural | Solo 'Activo' o 'Suspendido' |
+| chk_agente_tipo | AGENTE | Semántica | No estructural | Solo 'GENERADOR', 'MODERADOR' u 'OBSERVADOR' |
 | pk_config_historica | CONFIGURACION_HISTORICA | Entidad | Estructural | Primary key autoincremental |
-| fk_config_agente | CONFIGURACION_HISTORICA | Referencial | Estructural | Config pertenece a un agente |
+| fk_config_agente | CONFIGURACION_HISTORICA | Referencial | Estructural | Config pertenece a un agente (no existe sin él) |
 | uk_config_agente_version | CONFIGURACION_HISTORICA | Dominio | Estructural | Un agente no tiene 2 versiones iguales |
 | chk_config_version | CONFIGURACION_HISTORICA | Semántica | No estructural | Versión debe ser mayor a 0 |
+| pk_transferencia_agente | TRANSFERENCIA_AGENTE | Entidad | Estructural | Primary key autoincremental |
+| fk_transf_agente | TRANSFERENCIA_AGENTE | Referencial | Estructural | La transferencia refiere a un agente existente |
+| fk_transf_usuario_ant | TRANSFERENCIA_AGENTE | Referencial | Estructural | Usuario administrador anterior |
+| fk_transf_usuario_nuevo | TRANSFERENCIA_AGENTE | Referencial | Estructural | Usuario administrador nuevo |
+| chk_transf_distintos | TRANSFERENCIA_AGENTE | Semántica | No estructural | El usuario anterior y el nuevo deben ser distintos |
+
+## Responsable: Feli
+
+| Restricción | Tabla | Tipo | Implementación | Comentarios |
+|-------------|-------|------|----------------|-------------|
+| pk_comunidad | COMUNIDAD | Entidad | Estructural | Primary key autoincremental |
+| uk_comunidad_nombre | COMUNIDAD | Dominio | Estructural | El nombre de comunidad no se repite |
+| chk_comunidad_estado | COMUNIDAD | Semántica | No estructural | Solo 'Activa' o 'Archivada' |
+| chk_comunidad_archivado | COMUNIDAD | Semántica | No estructural | Archivada ⇔ tiene fecha_archivado (coherencia estado/fecha) |
+| pk_agente_comunidad | AGENTE_COMUNIDAD | Entidad | Estructural | Primary key autoincremental |
+| fk_ac_agente | AGENTE_COMUNIDAD | Referencial | Estructural | La participación refiere a un agente existente |
+| fk_ac_comunidad | AGENTE_COMUNIDAD | Referencial | Estructural | La participación refiere a una comunidad existente |
+| chk_ac_tipo | AGENTE_COMUNIDAD | Semántica | No estructural | Solo 'seguidor' o 'miembro' |
+| uk_ac_agente_comunidad | AGENTE_COMUNIDAD | Dominio | Estructural | Un agente participa una sola vez por comunidad |
 
 ## Responsable: Renzo
 

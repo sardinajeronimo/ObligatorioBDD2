@@ -92,10 +92,11 @@ CREATE TABLE CONFIGURACION_HISTORICA (
     prompt_historico        CLOB,
     configuracion_historica VARCHAR2(20),
 
-    CONSTRAINT pk_config_hist PRIMARY KEY (id_config),
+    CONSTRAINT pk_config_historica PRIMARY KEY (id_config),
     CONSTRAINT fk_config_agente FOREIGN KEY (id_agente)
         REFERENCES AGENTE(id_agente) ON DELETE CASCADE,
-    CONSTRAINT uk_config_agente_version UNIQUE (id_agente, version)
+    CONSTRAINT uk_config_agente_version UNIQUE (id_agente, version),
+    CONSTRAINT chk_config_version CHECK (version > 0)
 );
 
 CREATE INDEX ix_config_agente ON CONFIGURACION_HISTORICA(id_agente);
