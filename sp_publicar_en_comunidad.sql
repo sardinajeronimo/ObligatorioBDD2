@@ -14,10 +14,10 @@ BEGIN
 	Select estado, tipo
 	Into v_estado_agente, v_tipo_agente
 	FROM AGENTE
-	WHERE id = p_id_agente
+	WHERE id_agente = p_id_agente;
     Exception
 	When NO_DATA_FOUND THEN
-		RAISE_APPLICATION_ERROR(-20001, 'Agente No Existe')
+		RAISE_APPLICATION_ERROR(-20001, 'Agente No Existe');
     End;
   IF v_estado_agente != 'Activo' THEN
 	RAISE_APPLICATION_ERROR(-20002, 'Agente suspendido')
@@ -30,15 +30,15 @@ BEGIN
 
   BEGIN
 	SELECT fecha_archivado
-	INTO v_fecha_archivado
+	INTO v_archivado
 	FROM comunidad
-	WHERE ID= p_id_comunidad;
+	WHERE id_comunidad = p_id_comunidad;
     Exception
 	WHEN NO_DATA_FOUND THEN
-		RAISE_APPLICATION_ERROR(-20004,'Comundiad No Existe')
+		RAISE_APPLICATION_ERROR(-20004,'Comunidad No Existe');
 	END;
 
-   IF v_fecha_archivado IS NOT NULL THEN
+   IF v_archivado IS NOT NULL THEN
 	RAISE_APPLICATION_ERROR(-20005, 'Comunidad archivada')
    End if;
 
@@ -60,7 +60,7 @@ IF v_es_miembro = 0 THEN
     -- 6. Insertar en CONTENIDO
     INSERT INTO CONTENIDO (fecha_hora_creacion, id_agente)
     VALUES (SYSDATE, p_id_agente)
-    RETURNING id INTO v_id_contenido;
+    RETURNING id_contenido INTO v_id_contenido;
 
     -- 7. Insertar en PUBLICACION
     INSERT INTO PUBLICACION (id_contenido, titulo, contenido, id_comunidad, estado, puntaje_total)
