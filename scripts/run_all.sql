@@ -11,6 +11,7 @@
 -- ============================================
 SET SERVEROUTPUT ON
 SET DEFINE OFF
+SET SQLBLANKLINES ON
 
 PROMPT ===== DDL =====
 @@ddl/00_usuario_agente.sql
