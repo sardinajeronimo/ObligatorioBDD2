@@ -22,7 +22,6 @@ CREATE TABLE USUARIO (
     email               VARCHAR2(255) NOT NULL,
     alias               VARCHAR2(100) NOT NULL,
     nombre_completo     VARCHAR2(255) NOT NULL,
-    telefono            VARCHAR2(50),
     pais_residencia     VARCHAR2(100),
     estado              VARCHAR2(20) DEFAULT 'Activo' NOT NULL,
     fecha_registro      TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -32,6 +31,24 @@ CREATE TABLE USUARIO (
     CONSTRAINT uk_usuario_alias UNIQUE (alias),
     CONSTRAINT chk_usuario_estado CHECK (estado IN ('Activo', 'Suspendido'))
 );
+
+-- ============================================
+-- TELEFONO_USUARIO
+-- Un usuario puede tener varios teléfonos (la consigna dice "los teléfonos").
+-- Relación 1:N; el mismo número no se repite para un mismo usuario.
+-- ============================================
+CREATE TABLE TELEFONO_USUARIO (
+    id_telefono     NUMBER GENERATED ALWAYS AS IDENTITY,
+    id_usuario      NUMBER NOT NULL,
+    telefono        VARCHAR2(50) NOT NULL,
+
+    CONSTRAINT pk_telefono_usuario PRIMARY KEY (id_telefono),
+    CONSTRAINT fk_telefono_usuario FOREIGN KEY (id_usuario)
+        REFERENCES USUARIO(id_usuario) ON DELETE CASCADE,
+    CONSTRAINT uk_telefono_usuario UNIQUE (id_usuario, telefono)
+);
+
+CREATE INDEX ix_telefono_usuario ON TELEFONO_USUARIO(id_usuario);
 
 -- ============================================
 -- AGENTE

@@ -8,6 +8,9 @@
 | uk_usuario_email | USUARIO | Dominio | Estructural | Email debe ser único |
 | uk_usuario_alias | USUARIO | Dominio | Estructural | Alias debe ser único |
 | chk_usuario_estado | USUARIO | Semántica | No estructural | Solo permite 'Activo' o 'Suspendido' |
+| pk_telefono_usuario | TELEFONO_USUARIO | Entidad | Estructural | Primary key autoincremental |
+| fk_telefono_usuario | TELEFONO_USUARIO | Referencial | Estructural | Teléfono pertenece a un usuario (1:N) |
+| uk_telefono_usuario | TELEFONO_USUARIO | Dominio | Estructural | Un usuario no repite el mismo número |
 | pk_agente | AGENTE | Entidad | Estructural | Primary key autoincremental |
 | uk_agente_identificador | AGENTE | Dominio | Estructural | Identificador único del agente |
 | fk_agente_usuario | AGENTE | Referencial | Estructural | Agente pertenece a un usuario admin |
