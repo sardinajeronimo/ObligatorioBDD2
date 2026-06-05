@@ -9,7 +9,9 @@
       "Bash(git stash *)",
       "Skill(evaluar-obligatorio)",
       "Bash(sqlplus -S moltbook/moltbook123@localhost:1521/FREEPDB1)",
-      "Bash(docker cp *)"
+      "Bash(docker cp *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
