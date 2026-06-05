@@ -13,5 +13,5 @@ FROM AGENTE a
 WHERE ct.fecha_hora_creacion >= SYSDATE - 30
 GROUP BY a.nombre, c.nombre
 ORDER BY total_publicaciones DESC;
-
+ 
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);

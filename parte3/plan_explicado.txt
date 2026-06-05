@@ -1,0 +1,131 @@
+##Consulta
+EXPLAIN PLAN FOR
+SELECT 
+    a.nombre                            AS agente,
+    c.nombre                            AS comunidad,
+    COUNT(DISTINCT p.id_contenido)      AS total_publicaciones,
+    COUNT(v.id_voto)                    AS votos_positivos
+FROM AGENTE a
+    JOIN CONTENIDO ct   ON ct.id_agente    = a.id_agente
+    JOIN PUBLICACION p  ON p.id_contenido  = ct.id_contenido
+    JOIN COMUNIDAD c    ON c.id_comunidad  = p.id_comunidad
+    LEFT JOIN VOTO v    ON v.id_publicacion = p.id_contenido
+                       AND v.tipo = 'positivo'
+WHERE ct.fecha_hora_creacion >= SYSDATE - 30
+GROUP BY a.nombre, c.nombre
+ORDER BY total_publicaciones DESC;
+ 
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+
+##Pregunta de Negocio
+¿Qué agentes generaron más publicaciones en cada comunidad 
+en los últimos 30 días y cuántos votos positivos recibieron?
+
+##Plan de Ejecucion
+
+Explicado.
+
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 1994302842
+ 
+----------------------------------------------------------------------------------------------------------------
+| Id  | Operation                                | Name                | Rows  | Bytes | Cost (%CPU)| Time     |
+----------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                         |                     |    29 |  7453 |     9  (34)| 00:00:01 |
+|   1 |  SORT ORDER BY                           |                     |    29 |  7453 |     9  (34)| 00:00:01 |
+|   2 |   HASH GROUP BY                          |                     |    29 |  7453 |     9  (34)| 00:00:01 |
+|   3 |    VIEW                                  | VW_DAG_0            |    29 |  7453 |     7  (15)| 00:00:01 |
+|   4 |     HASH GROUP BY                        |                     |    29 |  9251 |     7  (15)| 00:00:01 |
+|   5 |      NESTED LOOPS OUTER                  |                     |    29 |  9251 |     6   (0)| 00:00:01 |
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|*  6 |       HASH JOIN                          |                     |    16 |  4576 |     6   (0)| 00:00:01 |
+|   7 |        NESTED LOOPS                      |                     |    10 |  1410 |     3   (0)| 00:00:01 |
+|   8 |         NESTED LOOPS                     |                     |    12 |  1410 |     3   (0)| 00:00:01 |
+|   9 |          TABLE ACCESS FULL               | COMUNIDAD           |     4 |   460 |     3   (0)| 00:00:01 |
+|* 10 |          INDEX RANGE SCAN                | IX_PUB_COMUNIDAD    |     3 |       |     0   (0)| 00:00:01 |
+|  11 |         TABLE ACCESS BY INDEX ROWID      | PUBLICACION         |     3 |    78 |     0   (0)| 00:00:01 |
+|  12 |        VIEW                              | VW_GBF_17           |    16 |  2320 |     3   (0)| 00:00:01 |
+|  13 |         NESTED LOOPS                     |                     |    16 |  2896 |     3   (0)| 00:00:01 |
+|  14 |          NESTED LOOPS                    |                     |    30 |  2896 |     3   (0)| 00:00:01 |
+|  15 |           TABLE ACCESS FULL              | AGENTE              |     6 |   852 |     3   (0)| 00:00:01 |
+|* 16 |           INDEX RANGE SCAN               | IX_CONTENIDO_AGENTE |     5 |       |     0   (0)| 00:00:01 |
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|* 17 |          TABLE ACCESS BY INDEX ROWID     | CONTENIDO           |     3 |   117 |     0   (0)| 00:00:01 |
+|* 18 |       TABLE ACCESS BY INDEX ROWID BATCHED| VOTO                |     2 |    66 |     0   (0)| 00:00:01 |
+|* 19 |        INDEX RANGE SCAN                  | IX_VOTO_PUBLICACION |     3 |       |     0   (0)| 00:00:01 |
+----------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   6 - access("P"."ID_CONTENIDO"="ITEM_1")
+  10 - access("C"."ID_COMUNIDAD"="P"."ID_COMUNIDAD")
+  16 - access("CT"."ID_AGENTE"="A"."ID_AGENTE")
+
+PLAN_TABLE_OUTPUT                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  17 - filter("CT"."FECHA_HORA_CREACION">=SYSDATE@!-30)
+  18 - filter("V"."TIPO"(+)='positivo')
+  19 - access("V"."ID_PUBLICACION"(+)="P"."ID_CONTENIDO")
+ 
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+
+40 filas seleccionadas. 
+
+
+##Analisis
+
+1. Operaciones identificadas**
+Las operaciones del plan: HASH JOIN, NESTED LOOPS, TABLE ACCESS FULL, INDEX RANGE SCAN, HASH GROUP BY, SORT ORDER BY.
+
+2. Relación con algoritmos vistos en clase**
+- NESTED LOOPS → algoritmo nested loop join: por cada fila de una tabla busca en la otra usando índice
+- HASH JOIN → algoritmo hash join: construye tabla hash de un lado, prueba el otro
+- TABLE ACCESS FULL → full table scan: lee toda la tabla sin índice
+- INDEX RANGE SCAN → usa el índice para leer solo las filas necesarias
+
+3. Eficiencia**
+- Costo total: 9 (muy bajo)
+- Tiempo estimado: 1 segundo
+- Oracle eligió nested loops donde hay índices disponibles
+- Full scan en COMUNIDAD y AGENTE porque tienen pocas filas (4 y 6), es más barato que usar índice
+
+4. Mejoras propuestas**
+- Agregar índice en `CONTENIDO(fecha_hora_creacion)` para que el filtro de los 30 días use range scan en vez de filter
+- Con más datos el optimizer podría cambiar de nested loops a hash join en algunos nodos 
+
+### Relación con algoritmos vistos en clase
+
+El plan utiliza dos algoritmos de join principales:
+
+**Nested Loop Join** (líneas 7, 8, 13, 14): Oracle itera sobre cada fila de la tabla exterior y busca las filas correspondientes en la tabla interior usando un índice. Se usa cuando una de las tablas es pequeña o existe un índice eficiente. En este caso se aplica entre COMUNIDAD y PUBLICACION (usando IX_PUB_COMUNIDAD) y entre AGENTE y CONTENIDO (usando IX_CONTENIDO_AGENTE).
+
+**Hash Join** (línea 6): Oracle construye una tabla hash en memoria con el resultado de un lado del join y luego prueba cada fila del otro lado contra esa tabla. Se usa cuando los conjuntos son medianos y no hay un índice que cubra el join. Aquí une el resultado de PUBLICACION+COMUNIDAD con el resultado de AGENTE+CONTENIDO.
+
+**Hash Group By** (líneas 2, 4): Agrupa los resultados usando una tabla hash en memoria. Aparece dos veces por el COUNT(DISTINCT), que requiere una pre-agregación interna antes de la agregación final.
+
+### Eficiencia
+
+La consulta tiene un costo estimado de 9 con tiempo de ejecución de 1 segundo. Oracle tomó decisiones eficientes dado el volumen de datos actual:
+
+- COMUNIDAD y AGENTE se leen completas (TABLE ACCESS FULL) porque tienen 4 y 6 filas respectivamente. Con tablas tan pequeñas, un full scan es más barato que acceder a un índice.
+- Los índices IX_PUB_COMUNIDAD, IX_CONTENIDO_AGENTE e IX_VOTO_PUBLICACION se usan correctamente en los nested loops, evitando scans completos en las tablas más grandes.
+- El LEFT JOIN a VOTO se implementa como NESTED LOOPS OUTER, preservando publicaciones sin votos.
+
+### Mejoras propuestas
+
+Con mayor volumen de datos el plan actual podría degradarse. Se proponen las siguientes mejoras:
+
+1. **Índice en CONTENIDO(fecha_hora_creacion)**: el filtro `WHERE ct.fecha_hora_creacion >= SYSDATE - 30` aparece como filter en línea 17, lo que significa que Oracle lee todas las filas de CONTENIDO y descarta las que no cumplen. Un índice en esa columna lo convertiría en INDEX RANGE SCAN.
+
+2. **Índice compuesto en CONTENIDO(id_agente, fecha_hora_creacion)**: cubriría tanto el join con AGENTE como el filtro de fecha en una sola estructura, reduciendo accesos a disco.
+
+3. **Con más datos**: el optimizer probablemente cambiaría los nested loops entre tablas grandes a hash joins, que escalan mejor con volúmenes altos.

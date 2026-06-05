@@ -4,14 +4,9 @@
       "Bash(git pull *)",
       "Bash(docker exec oracle-free *)",
       "Bash(docker exec *)",
-      "Bash(git push *)",
-      "Bash(git checkout *)",
-      "Bash(git stash *)",
-      "Skill(evaluar-obligatorio)",
-      "Bash(sqlplus -S moltbook/moltbook123@localhost:1521/FREEPDB1)",
-      "Bash(docker cp *)",
-      "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Read(//Users/jeronimo/.claude/**)",
+      "Read(//Users/jeronimo/.claude/skills/**)",
+      "Bash(python3 -m json.tool)"
     ]
   }
 }
