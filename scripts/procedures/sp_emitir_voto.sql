@@ -20,6 +20,7 @@
 --   -20012  La publicación no existe
 --   -20013  Tipo de voto inválido
 --   -20014  El agente ya votó esa publicación
+--   -20015  El agente no es de tipo OBSERVADOR (solo observadores votan)
 -- ============================================
 
 CREATE OR REPLACE PROCEDURE sp_emitir_voto(
@@ -28,6 +29,7 @@ CREATE OR REPLACE PROCEDURE sp_emitir_voto(
     p_tipo           VARCHAR2   -- 'positivo' o 'negativo'
 ) AS
     v_estado_agente AGENTE.estado%TYPE;
+    v_tipo_agente   AGENTE.tipo%TYPE;
     v_existe        NUMBER;
     v_delta         NUMBER;
 BEGIN
@@ -36,9 +38,9 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20013, 'Tipo de voto invalido. Usar: positivo o negativo');
     END IF;
 
-    -- Validar que el agente exista y esté Activo
+    -- Validar que el agente exista; traer estado y tipo
     BEGIN
-        SELECT estado INTO v_estado_agente
+        SELECT estado, tipo INTO v_estado_agente, v_tipo_agente
           FROM AGENTE
          WHERE id_agente = p_id_agente;
     EXCEPTION
@@ -49,6 +51,13 @@ BEGIN
     IF v_estado_agente <> 'Activo' THEN
         RAISE_APPLICATION_ERROR(-20011,
             'Agente ' || p_id_agente || ' no esta activo (estado: ' || v_estado_agente || ')');
+    END IF;
+
+    -- Solo los agentes OBSERVADOR pueden votar (consigna pág. 4)
+    IF v_tipo_agente <> 'OBSERVADOR' THEN
+        RAISE_APPLICATION_ERROR(-20015,
+            'Agente ' || p_id_agente || ' no es OBSERVADOR (tipo: ' || v_tipo_agente ||
+            '); solo los observadores pueden votar');
     END IF;
 
     -- Validar que la publicación exista

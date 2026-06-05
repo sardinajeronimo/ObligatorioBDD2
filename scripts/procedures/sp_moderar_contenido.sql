@@ -18,6 +18,7 @@
 --   -20003  El agente no es de tipo MODERADOR
 --   -20004  El agente no es miembro de la comunidad
 --   -20005  El contenido no existe
+--   -20006  El contenido no pertenece a la comunidad indicada
 -- ============================================
 
 CREATE OR REPLACE PROCEDURE sp_moderar_contenido (
@@ -30,7 +31,7 @@ AS
     v_estado_agente  AGENTE.estado%TYPE;
     v_tipo_agente    AGENTE.tipo%TYPE;
     v_es_miembro     NUMBER;
-    v_existe_contenido NUMBER;
+    v_com_contenido  NUMBER;
 BEGIN
     -- 1. Validar que el agente exista y obtener su estado y tipo
     BEGIN
@@ -72,15 +73,26 @@ BEGIN
             ' no es miembro de la comunidad con id ' || p_id_comunidad || '.');
     END IF;
 
-    -- 5. Validar que el contenido exista
-    SELECT COUNT(*)
-      INTO v_existe_contenido
-      FROM CONTENIDO
-     WHERE id_contenido = p_id_contenido;
+    -- 5. Obtener la comunidad del contenido (sea publicación o comentario) y
+    --    validar que coincida con la comunidad donde se modera.
+    SELECT NVL(
+        (SELECT id_comunidad FROM PUBLICACION WHERE id_contenido = p_id_contenido),
+        (SELECT p.id_comunidad
+           FROM COMENTARIO c
+           JOIN PUBLICACION p ON p.id_contenido = c.id_publicacion
+          WHERE c.id_contenido = p_id_contenido)
+    ) INTO v_com_contenido
+    FROM dual;
 
-    IF v_existe_contenido = 0 THEN
+    IF v_com_contenido IS NULL THEN
         RAISE_APPLICATION_ERROR(-20005,
             'El contenido con id ' || p_id_contenido || ' no existe.');
+    END IF;
+
+    IF v_com_contenido <> p_id_comunidad THEN
+        RAISE_APPLICATION_ERROR(-20006,
+            'El contenido ' || p_id_contenido || ' no pertenece a la comunidad ' ||
+            p_id_comunidad || ' (pertenece a la ' || v_com_contenido || ').');
     END IF;
 
     -- 6. Registrar la acción de moderación
