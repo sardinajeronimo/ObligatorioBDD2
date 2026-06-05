@@ -59,7 +59,7 @@ CREATE TABLE PUBLICACION (
         REFERENCES PUBLICACION(id_contenido),
     CONSTRAINT chk_pub_estado CHECK (estado IN ('Activa', 'Cerrada', 'Eliminada')),
     CONSTRAINT chk_pub_titulo_nv CHECK (LENGTH(TRIM(titulo)) > 0),
-    CONSTRAINT chk_pub_cuerpo_nv CHECK (DBMS_LOB.GETLENGTH(contenido) > 0),
+    CONSTRAINT chk_pub_cuerpo_nv CHECK (LENGTH(contenido) > 0),
     -- Cita: o ambas columnas presentes, o ninguna
     CONSTRAINT chk_pub_cita CHECK (
         (id_publicacion_citada IS NULL AND fecha_cita IS NULL)
@@ -88,7 +88,7 @@ CREATE TABLE COMENTARIO (
         REFERENCES PUBLICACION(id_contenido) ON DELETE CASCADE,
     CONSTRAINT fk_com_padre FOREIGN KEY (id_comentario_padre)
         REFERENCES COMENTARIO(id_contenido),
-    CONSTRAINT chk_com_cuerpo_nv CHECK (DBMS_LOB.GETLENGTH(contenido) > 0),
+    CONSTRAINT chk_com_cuerpo_nv CHECK (LENGTH(contenido) > 0),
     CONSTRAINT chk_com_no_self CHECK (id_comentario_padre <> id_contenido)
 );
 
