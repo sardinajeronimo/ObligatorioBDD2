@@ -20,11 +20,11 @@ BEGIN
 		RAISE_APPLICATION_ERROR(-20001, 'Agente No Existe');
     End;
   IF v_estado_agente != 'Activo' THEN
-	RAISE_APPLICATION_ERROR(-20002, 'Agente suspendido')
+	RAISE_APPLICATION_ERROR(-20002, 'Agente suspendido');
   End if;
 
   IF v_tipo_agente != 'GENERADOR' THEN
-	RAISE_APPLICATION_ERROR(-20003, 'El agente no es tipo GENERADOR')
+	RAISE_APPLICATION_ERROR(-20003, 'El agente no es tipo GENERADOR');
   End IF;
 
 
@@ -39,7 +39,7 @@ BEGIN
 	END;
 
    IF v_archivado IS NOT NULL THEN
-	RAISE_APPLICATION_ERROR(-20005, 'Comunidad archivada')
+	RAISE_APPLICATION_ERROR(-20005, 'Comunidad archivada');
    End if;
 
 Select Count(*)

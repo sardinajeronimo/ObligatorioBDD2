@@ -9,13 +9,14 @@
 -- Casos limite cubiertos:
 --   * 5 usuarios activos + 1 suspendido
 --   * 3 comunidades activas + 1 archivada
---   * 6 agentes: GENERADOR/MODERADOR/OBSERVADOR, 1 suspendido
+--   * 9 agentes: GENERADOR/MODERADOR/OBSERVADOR (1 generador suspendido,
+--     4 observadores porque solo ellos pueden votar - consigna pag. 4)
 --   * 2 agentes con 2+ versiones en CONFIGURACION_HISTORICA
 --   * Participaciones seguidor y miembro
---   * 10 publicaciones: Activa/Cerrada/Eliminada
+--   * 10 publicaciones: Activa/Cerrada/Eliminada (autores siempre GENERADOR)
 --   * 1 publicacion que cita a otra
 --   * Comentarios anidados (hilo de 3 niveles)
---   * Votos positivos y negativos
+--   * Votos positivos y negativos (solo de agentes OBSERVADOR)
 --   * 1 transferencia de agente
 --   * 2 acciones de moderacion
 -- ============================================================
@@ -25,25 +26,44 @@ SET DEFINE OFF
 
 -- ============================================================
 -- USUARIOS
+-- (los telefonos van en TELEFONO_USUARIO: atributo multivaluado)
 -- ============================================================
-INSERT INTO USUARIO (email, alias, nombre_completo, telefono, pais_residencia, estado)
-VALUES ('ana.gomez@moltbook.io', 'ana_gomez', 'Ana Gomez', '+598 91 234 567', 'Uruguay', 'Activo');
+INSERT INTO USUARIO (email, alias, nombre_completo, pais_residencia, estado)
+VALUES ('ana.gomez@moltbook.io', 'ana_gomez', 'Ana Gomez', 'Uruguay', 'Activo');
 
-INSERT INTO USUARIO (email, alias, nombre_completo, telefono, pais_residencia, estado)
-VALUES ('carlos.diaz@moltbook.io', 'carlos_d', 'Carlos Diaz', '+598 99 876 543', 'Uruguay', 'Activo');
+INSERT INTO USUARIO (email, alias, nombre_completo, pais_residencia, estado)
+VALUES ('carlos.diaz@moltbook.io', 'carlos_d', 'Carlos Diaz', 'Uruguay', 'Activo');
 
-INSERT INTO USUARIO (email, alias, nombre_completo, telefono, pais_residencia, estado)
-VALUES ('lucia.vega@moltbook.io', 'lu_vega', 'Lucia Vega', '+54 11 5555 0001', 'Argentina', 'Activo');
+INSERT INTO USUARIO (email, alias, nombre_completo, pais_residencia, estado)
+VALUES ('lucia.vega@moltbook.io', 'lu_vega', 'Lucia Vega', 'Argentina', 'Activo');
 
-INSERT INTO USUARIO (email, alias, nombre_completo, telefono, pais_residencia, estado)
-VALUES ('martin.rey@moltbook.io', 'martin_rey', 'Martin Rey', '+598 94 111 222', 'Uruguay', 'Activo');
+INSERT INTO USUARIO (email, alias, nombre_completo, pais_residencia, estado)
+VALUES ('martin.rey@moltbook.io', 'martin_rey', 'Martin Rey', 'Uruguay', 'Activo');
 
-INSERT INTO USUARIO (email, alias, nombre_completo, telefono, pais_residencia, estado)
-VALUES ('sofia.luna@moltbook.io', 'sofia_luna', 'Sofia Luna', '+56 9 8765 4321', 'Chile', 'Activo');
+INSERT INTO USUARIO (email, alias, nombre_completo, pais_residencia, estado)
+VALUES ('sofia.luna@moltbook.io', 'sofia_luna', 'Sofia Luna', 'Chile', 'Activo');
 
 -- Usuario suspendido
-INSERT INTO USUARIO (email, alias, nombre_completo, telefono, pais_residencia, estado)
-VALUES ('pedro.bans@moltbook.io', 'pedro_bans', 'Pedro Bans', '+598 98 000 111', 'Uruguay', 'Suspendido');
+INSERT INTO USUARIO (email, alias, nombre_completo, pais_residencia, estado)
+VALUES ('pedro.bans@moltbook.io', 'pedro_bans', 'Pedro Bans', 'Uruguay', 'Suspendido');
+
+-- ============================================================
+-- TELEFONOS  (1:N con USUARIO; ana_gomez tiene 2 para cubrir el caso multivaluado)
+-- ============================================================
+INSERT INTO TELEFONO_USUARIO (id_usuario, telefono)
+VALUES ((SELECT id_usuario FROM USUARIO WHERE alias = 'ana_gomez'), '+598 91 234 567');
+INSERT INTO TELEFONO_USUARIO (id_usuario, telefono)
+VALUES ((SELECT id_usuario FROM USUARIO WHERE alias = 'ana_gomez'), '+598 2 487 1122');
+INSERT INTO TELEFONO_USUARIO (id_usuario, telefono)
+VALUES ((SELECT id_usuario FROM USUARIO WHERE alias = 'carlos_d'), '+598 99 876 543');
+INSERT INTO TELEFONO_USUARIO (id_usuario, telefono)
+VALUES ((SELECT id_usuario FROM USUARIO WHERE alias = 'lu_vega'), '+54 11 5555 0001');
+INSERT INTO TELEFONO_USUARIO (id_usuario, telefono)
+VALUES ((SELECT id_usuario FROM USUARIO WHERE alias = 'martin_rey'), '+598 94 111 222');
+INSERT INTO TELEFONO_USUARIO (id_usuario, telefono)
+VALUES ((SELECT id_usuario FROM USUARIO WHERE alias = 'sofia_luna'), '+56 9 8765 4321');
+INSERT INTO TELEFONO_USUARIO (id_usuario, telefono)
+VALUES ((SELECT id_usuario FROM USUARIO WHERE alias = 'pedro_bans'), '+598 98 000 111');
 
 -- ============================================================
 -- COMUNIDADES
@@ -101,6 +121,27 @@ VALUES ('ObservaBot', 'observabot-1', 'Agente observador que monitorea tendencia
         'OBSERVADOR', 'Simple', 'Activo',
         (SELECT id_usuario FROM USUARIO WHERE alias = 'carlos_d'));
 
+-- Observadores adicionales: la consigna (pag. 4) indica que SOLO los agentes
+-- OBSERVADOR pueden votar. Se necesitan varios para que las publicaciones
+-- acumulen votos positivos/negativos sin violar "1 voto por agente y publicacion".
+INSERT INTO AGENTE (nombre, identificador, descripcion, prompt, tipo, configuracion, estado, id_usuario_admin)
+VALUES ('ObservaBot 2', 'observabot-2', 'Observador de tendencias en ciencia de datos.',
+        'Monitorea publicaciones de datos y vota segun relevancia.',
+        'OBSERVADOR', 'Simple', 'Activo',
+        (SELECT id_usuario FROM USUARIO WHERE alias = 'martin_rey'));
+
+INSERT INTO AGENTE (nombre, identificador, descripcion, prompt, tipo, configuracion, estado, id_usuario_admin)
+VALUES ('ObservaBot 3', 'observabot-3', 'Observador de debates eticos.',
+        'Monitorea debates de etica y vota segun calidad argumental.',
+        'OBSERVADOR', 'Simple', 'Activo',
+        (SELECT id_usuario FROM USUARIO WHERE alias = 'sofia_luna'));
+
+INSERT INTO AGENTE (nombre, identificador, descripcion, prompt, tipo, configuracion, estado, id_usuario_admin)
+VALUES ('ObservaBot 4', 'observabot-4', 'Observador generalista de la red.',
+        'Monitorea publicaciones de todas las comunidades y vota.',
+        'OBSERVADOR', 'Simple', 'Activo',
+        (SELECT id_usuario FROM USUARIO WHERE alias = 'ana_gomez'));
+
 -- ============================================================
 -- CONFIGURACION_HISTORICA
 -- GenBot Alpha: versiones 1 y 2 (prompt mejorado, upgrade a Compuesta)
@@ -151,6 +192,21 @@ INSERT INTO CONFIGURACION_HISTORICA (id_agente, version, fecha_aplicacion, descr
 VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'observabot-1'),
         1, SYSDATE - 30, 'Config inicial.',
         'Monitorea publicaciones y clasifica temas emergentes.', 'Simple');
+
+INSERT INTO CONFIGURACION_HISTORICA (id_agente, version, fecha_aplicacion, descripcion_cambio, prompt_historico, configuracion_historica)
+VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'observabot-2'),
+        1, SYSDATE - 28, 'Config inicial.',
+        'Monitorea publicaciones de datos y vota segun relevancia.', 'Simple');
+
+INSERT INTO CONFIGURACION_HISTORICA (id_agente, version, fecha_aplicacion, descripcion_cambio, prompt_historico, configuracion_historica)
+VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'observabot-3'),
+        1, SYSDATE - 26, 'Config inicial.',
+        'Monitorea debates de etica y vota segun calidad argumental.', 'Simple');
+
+INSERT INTO CONFIGURACION_HISTORICA (id_agente, version, fecha_aplicacion, descripcion_cambio, prompt_historico, configuracion_historica)
+VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'observabot-4'),
+        1, SYSDATE - 24, 'Config inicial.',
+        'Monitorea publicaciones de todas las comunidades y vota.', 'Simple');
 
 -- ============================================================
 -- AGENTE_COMUNIDAD
@@ -213,6 +269,18 @@ INSERT INTO AGENTE_COMUNIDAD (id_agente, id_comunidad, tipo_participacion)
 VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'observabot-1'),
         (SELECT id_comunidad FROM COMUNIDAD WHERE nombre = 'Etica en IA'), 'seguidor');
 
+INSERT INTO AGENTE_COMUNIDAD (id_agente, id_comunidad, tipo_participacion)
+VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'observabot-2'),
+        (SELECT id_comunidad FROM COMUNIDAD WHERE nombre = 'Ciencia de Datos'), 'seguidor');
+
+INSERT INTO AGENTE_COMUNIDAD (id_agente, id_comunidad, tipo_participacion)
+VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'observabot-3'),
+        (SELECT id_comunidad FROM COMUNIDAD WHERE nombre = 'Etica en IA'), 'seguidor');
+
+INSERT INTO AGENTE_COMUNIDAD (id_agente, id_comunidad, tipo_participacion)
+VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'observabot-4'),
+        (SELECT id_comunidad FROM COMUNIDAD WHERE nombre = 'IA General'), 'seguidor');
+
 -- ============================================================
 -- TRANSFERENCIA_AGENTE
 -- GenBot Gamma fue transferido del usuario carlos_d al usuario lu_vega
@@ -234,6 +302,10 @@ DECLARE
     v_ag_beta    NUMBER;
     v_ag_mod_e   NUMBER;
     v_ag_mod_p   NUMBER;
+    v_ag_o1      NUMBER;   -- observadores: unicos que pueden votar (consigna pag. 4)
+    v_ag_o2      NUMBER;
+    v_ag_o3      NUMBER;
+    v_ag_o4      NUMBER;
     v_com_ia     NUMBER;
     v_com_datos  NUMBER;
     v_com_etica  NUMBER;
@@ -260,6 +332,10 @@ BEGIN
     SELECT id_agente INTO v_ag_beta   FROM AGENTE   WHERE identificador = 'genbot-beta';
     SELECT id_agente INTO v_ag_mod_e  FROM AGENTE   WHERE identificador = 'modbot-etico';
     SELECT id_agente INTO v_ag_mod_p  FROM AGENTE   WHERE identificador = 'modbot-prime';
+    SELECT id_agente INTO v_ag_o1     FROM AGENTE   WHERE identificador = 'observabot-1';
+    SELECT id_agente INTO v_ag_o2     FROM AGENTE   WHERE identificador = 'observabot-2';
+    SELECT id_agente INTO v_ag_o3     FROM AGENTE   WHERE identificador = 'observabot-3';
+    SELECT id_agente INTO v_ag_o4     FROM AGENTE   WHERE identificador = 'observabot-4';
     SELECT id_comunidad INTO v_com_ia     FROM COMUNIDAD WHERE nombre = 'IA General';
     SELECT id_comunidad INTO v_com_datos  FROM COMUNIDAD WHERE nombre = 'Ciencia de Datos';
     SELECT id_comunidad INTO v_com_etica  FROM COMUNIDAD WHERE nombre = 'Etica en IA';
@@ -305,8 +381,9 @@ BEGIN
             'Tutorial sobre pipelines reproducibles para transformacion de features en ML.',
             'Activa', 0);
 
-    -- Pub 7: Activa, Etica en IA, modbot-etico (miembro de Etica en IA)
-    INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_mod_e, SYSDATE - 8) RETURNING id_contenido INTO v_c7;
+    -- Pub 7: Activa, Etica en IA, genbot-alpha (GENERADOR miembro de Etica en IA).
+    -- (la consigna pag. 4 prohibe que un MODERADOR genere contenido)
+    INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_alpha, SYSDATE - 8) RETURNING id_contenido INTO v_c7;
     INSERT INTO PUBLICACION (id_contenido, id_comunidad, titulo, contenido, estado, puntaje_total)
     VALUES (v_c7, v_com_etica, 'Regulacion europea de IA: resumen del AI Act',
             'Sintesis de los puntos clave del AI Act y su impacto en el desarrollo de sistemas de IA.',
@@ -370,45 +447,47 @@ BEGIN
 
     -- ============================================================
     -- VOTOS  (positivo/negativo, sin duplicados por agente+pub)
-    -- Solo sobre publicaciones Activas: pub 1-7 y pub 10
+    -- Consigna pag. 4: SOLO los agentes OBSERVADOR pueden votar.
+    -- Solo sobre publicaciones Activas: pub 1-7 y pub 10.
     -- ============================================================
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_beta,  v_c1, 'positivo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_p, v_c1, 'positivo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_e, v_c1, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o1, v_c1, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o2, v_c1, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o3, v_c1, 'positivo');
 
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_alpha, v_c2, 'positivo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_p, v_c2, 'positivo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_e, v_c2, 'negativo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o1, v_c2, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o2, v_c2, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o3, v_c2, 'negativo');
 
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_alpha, v_c3, 'positivo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_p, v_c3, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o1, v_c3, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o2, v_c3, 'positivo');
 
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_beta,  v_c4, 'positivo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_p, v_c4, 'positivo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_e, v_c4, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o1, v_c4, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o2, v_c4, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o3, v_c4, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o4, v_c4, 'positivo');
 
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_beta,  v_c5, 'positivo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_p, v_c5, 'negativo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_e, v_c5, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o1, v_c5, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o2, v_c5, 'negativo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o3, v_c5, 'positivo');
 
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_alpha, v_c6, 'positivo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_e, v_c6, 'negativo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o1, v_c6, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o2, v_c6, 'negativo');
 
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_alpha, v_c7, 'positivo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_beta,  v_c7, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o1, v_c7, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o2, v_c7, 'positivo');
 
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_p, v_c10, 'positivo');
-    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_mod_e, v_c10, 'negativo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o3, v_c10, 'positivo');
+    INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o4, v_c10, 'negativo');
 
-    -- Actualizar puntaje_total coherente con los votos insertados
-    UPDATE PUBLICACION SET puntaje_total = 3  WHERE id_contenido = v_c1;
-    UPDATE PUBLICACION SET puntaje_total = 1  WHERE id_contenido = v_c2;
-    UPDATE PUBLICACION SET puntaje_total = 2  WHERE id_contenido = v_c3;
-    UPDATE PUBLICACION SET puntaje_total = 3  WHERE id_contenido = v_c4;
-    UPDATE PUBLICACION SET puntaje_total = 1  WHERE id_contenido = v_c5;
-    UPDATE PUBLICACION SET puntaje_total = 0  WHERE id_contenido = v_c6;
-    UPDATE PUBLICACION SET puntaje_total = 2  WHERE id_contenido = v_c7;
-    UPDATE PUBLICACION SET puntaje_total = 0  WHERE id_contenido = v_c10;
+    -- Actualizar puntaje_total coherente con los votos insertados (+1 pos / -1 neg)
+    UPDATE PUBLICACION SET puntaje_total = 3  WHERE id_contenido = v_c1;   -- 3 pos
+    UPDATE PUBLICACION SET puntaje_total = 1  WHERE id_contenido = v_c2;   -- 2 pos 1 neg
+    UPDATE PUBLICACION SET puntaje_total = 2  WHERE id_contenido = v_c3;   -- 2 pos
+    UPDATE PUBLICACION SET puntaje_total = 4  WHERE id_contenido = v_c4;   -- 4 pos
+    UPDATE PUBLICACION SET puntaje_total = 1  WHERE id_contenido = v_c5;   -- 2 pos 1 neg
+    UPDATE PUBLICACION SET puntaje_total = 0  WHERE id_contenido = v_c6;   -- 1 pos 1 neg
+    UPDATE PUBLICACION SET puntaje_total = 2  WHERE id_contenido = v_c7;   -- 2 pos
+    UPDATE PUBLICACION SET puntaje_total = 0  WHERE id_contenido = v_c10;  -- 1 pos 1 neg
 
     -- ============================================================
     -- MODERACION
@@ -430,6 +509,7 @@ END;
 -- Resumen de filas insertadas
 -- ============================================================
 SELECT 'USUARIO'              AS tabla, COUNT(*) AS filas FROM USUARIO
+UNION ALL SELECT 'TELEFONO_USUARIO',   COUNT(*) FROM TELEFONO_USUARIO
 UNION ALL SELECT 'AGENTE',             COUNT(*) FROM AGENTE
 UNION ALL SELECT 'CONFIG_HISTORICA',   COUNT(*) FROM CONFIGURACION_HISTORICA
 UNION ALL SELECT 'COMUNIDAD',          COUNT(*) FROM COMUNIDAD
