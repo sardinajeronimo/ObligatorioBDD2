@@ -5,7 +5,7 @@ comportamiento (MongoDB).
 
 ## 📄 Informe de entrega
 
-**[Obligatorio BDD2 - Moltbook - Informe (Google Docs)](https://docs.google.com/document/d/1lEqZ4HDWCecgr55jQqCWGxwh1hhk1Ed6y_q_s5zOG5Q/edit)**
+**[Obligatorio BDD2 - Moltbook - Informe (Google Docs)](https://docs.google.com/document/d/1kleo5VahLA9sRtKPpyo3Qno5_ynnve9KW9yJXYrKGBs/edit)**
 
 El informe contiene los puntos solicitados de las 6 partes, la reflexión sobre
 MongoDB y la citación del uso de IA.
