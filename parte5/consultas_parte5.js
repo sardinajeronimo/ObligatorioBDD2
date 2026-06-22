@@ -1,9 +1,9 @@
-// Parte 5 — Consultas sobre el subsistema de analitica (coleccion `eventos`).
+// Parte 5: Consultas sobre el subsistema de analitica (coleccion `eventos`).
 // Ejecutar contra la BD `moltbook` poblada por parte4/02_datos_prueba.js
 // (o por parte4/03_integracion_oracle_mongo.js).
 
 // =============================================================================
-// 5.1 — Eventos "decision" de un agente en un rango de fechas, en orden
+// 5.1: Eventos "decision" de un agente en un rango de fechas, en orden
 //        cronologico, incluyendo su contexto operacional y parametros de entrada.
 // =============================================================================
 db.eventos.find(
@@ -28,7 +28,7 @@ db.eventos.find(
 
 
 // =============================================================================
-// 5.2 — Top 5 agentes con mas eventos de criticidad "alta" en la ultima semana.
+// 5.2: Top 5 agentes con mas eventos de criticidad "alta" en la ultima semana.
 //        Para cada uno: cantidad total de eventos "alta" y su PROPORCION sobre
 //        el total de eventos "alta" del periodo (la cuota del agente en la semana).
 //        El segundo $group calcula el total del periodo, necesario para la
@@ -72,7 +72,7 @@ db.eventos.aggregate([
 
 
 // =============================================================================
-// 5.3 — Eventos "interaccion con usuario" de un agente, dentro de una franja
+// 5.3: Eventos "interaccion con usuario" de un agente, dentro de una franja
 //        horaria (08:00-17:00), agrupados por hora con la cantidad por hora.
 // =============================================================================
 db.eventos.aggregate([

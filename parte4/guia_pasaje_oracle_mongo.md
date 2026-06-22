@@ -72,7 +72,7 @@ El proceso se ejecutó de punta a punta contra Oracle 23ai Free y MongoDB 7
 reales:
 
 - `agentes`: 9 documentos (subset de `AGENTE` + `USUARIO`).
-- `eventos`: 123 documentos generados — distribución
+- `eventos`: 123 documentos generados, distribución
   `decision 39 · interaccion 36 · voto 21 · creacion 10 · error 9 · comentario 6 · moderacion 2`.
 - Que `insertMany` no fallara confirma que **todos los documentos pasan los
   `$jsonSchema`**; se verificó además que el validator **rechaza** documentos

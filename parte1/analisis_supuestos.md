@@ -1,4 +1,4 @@
-# Parte 1 — Análisis y Supuestos del Modelo Relacional (Moltbook)
+# Parte 1 - Análisis y Supuestos del Modelo Relacional (Moltbook)
 
 > Cubre el criterio **1.1** de la rúbrica: decisiones de modelado, supuestos
 > explícitos sobre cardinalidades y reglas de negocio.
@@ -13,12 +13,12 @@ Moltbook es una red social operada por **agentes de IA** que pertenecen a
 generan **contenido** (publicaciones y comentarios), lo **votan** y lo
 **moderan**. El modelo relacional captura tres ejes:
 
-1. **Identidad y administración** — quién es dueño de qué agente y cómo
+1. **Identidad y administración**: quién es dueño de qué agente y cómo
    evoluciona su configuración (USUARIO, TELEFONO_USUARIO, AGENTE,
    CONFIGURACION_HISTORICA, TRANSFERENCIA_AGENTE).
-2. **Pertenencia** — qué agente participa en qué comunidad y en qué rol
+2. **Pertenencia**: qué agente participa en qué comunidad y en qué rol
    (COMUNIDAD, AGENTE_COMUNIDAD).
-3. **Contenido e interacción** — la generalización CONTENIDO y sus subtipos,
+3. **Contenido e interacción**: la generalización CONTENIDO y sus subtipos,
    más los votos y las acciones de moderación (CONTENIDO, PUBLICACION,
    COMENTARIO, VOTO, MODERACION).
 
@@ -84,18 +84,18 @@ conserven su contexto y que el ranking las filtre por estado.
 
 | Relación | Cardinalidad | Supuesto |
 |---|---|---|
-| USUARIO — TELEFONO_USUARIO | 1 : N | Un usuario tiene 0..N teléfonos; cada teléfono es de un solo usuario. |
-| USUARIO — AGENTE (admin) | 1 : N | Un usuario administra 0..N agentes; un agente tiene **exactamente un** administrador a la vez. |
-| AGENTE — CONFIGURACION_HISTORICA | 1 : N | Un agente tiene 1..N versiones (al menos la inicial creada en 2.1). |
-| AGENTE — TRANSFERENCIA_AGENTE | 1 : N | Un agente puede transferirse 0..N veces. |
-| AGENTE — COMUNIDAD | N : M | Resuelta con AGENTE_COMUNIDAD; un agente participa **una sola vez** por comunidad (UNIQUE), como `seguidor` o `miembro`. |
-| AGENTE — CONTENIDO | 1 : N | Un agente autor genera 0..N contenidos; cada contenido tiene un único autor. |
-| COMUNIDAD — PUBLICACION | 1 : N | Cada publicación pertenece a exactamente una comunidad. |
-| PUBLICACION — COMENTARIO | 1 : N | Cada comentario pertenece a exactamente una publicación. |
-| COMENTARIO — COMENTARIO (padre) | 1 : N | Jerarquía de hilos: un comentario responde a 0..1 comentario padre. |
-| PUBLICACION — PUBLICACION (cita) | 1 : N | Una publicación cita opcionalmente a 0..1 publicación. |
-| AGENTE — PUBLICACION (voto) | N : M | Resuelta con VOTO; un agente vota **a lo sumo una vez** la misma publicación. |
-| AGENTE — CONTENIDO (moderación) | N : M | Resuelta con MODERACION; incluye la comunidad donde ocurre. |
+| USUARIO - TELEFONO_USUARIO | 1 : N | Un usuario tiene 0..N teléfonos; cada teléfono es de un solo usuario. |
+| USUARIO - AGENTE (admin) | 1 : N | Un usuario administra 0..N agentes; un agente tiene **exactamente un** administrador a la vez. |
+| AGENTE - CONFIGURACION_HISTORICA | 1 : N | Un agente tiene 1..N versiones (al menos la inicial creada en 2.1). |
+| AGENTE - TRANSFERENCIA_AGENTE | 1 : N | Un agente puede transferirse 0..N veces. |
+| AGENTE - COMUNIDAD | N : M | Resuelta con AGENTE_COMUNIDAD; un agente participa **una sola vez** por comunidad (UNIQUE), como `seguidor` o `miembro`. |
+| AGENTE - CONTENIDO | 1 : N | Un agente autor genera 0..N contenidos; cada contenido tiene un único autor. |
+| COMUNIDAD - PUBLICACION | 1 : N | Cada publicación pertenece a exactamente una comunidad. |
+| PUBLICACION - COMENTARIO | 1 : N | Cada comentario pertenece a exactamente una publicación. |
+| COMENTARIO - COMENTARIO (padre) | 1 : N | Jerarquía de hilos: un comentario responde a 0..1 comentario padre. |
+| PUBLICACION - PUBLICACION (cita) | 1 : N | Una publicación cita opcionalmente a 0..1 publicación. |
+| AGENTE - PUBLICACION (voto) | N : M | Resuelta con VOTO; un agente vota **a lo sumo una vez** la misma publicación. |
+| AGENTE - CONTENIDO (moderación) | N : M | Resuelta con MODERACION; incluye la comunidad donde ocurre. |
 
 ---
 

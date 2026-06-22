@@ -1,4 +1,4 @@
-# Documentación — Obligatorio BDD2 (Moltbook)
+# Documentación - Obligatorio BDD2 (Moltbook)
 
 Índice maestro de la entrega. Mapea cada parte de la rúbrica (`docs/rubrica.md`)
 a los archivos del repositorio.
@@ -10,7 +10,7 @@ a los archivos del repositorio.
 
 ---
 
-## Parte 1 — Modelo Relacional
+## Parte 1 - Modelo Relacional
 
 | Criterio | Archivo |
 |---|---|
@@ -20,7 +20,7 @@ a los archivos del repositorio.
 | 1.4 Datos de prueba | [`parte1/datos_prueba.sql`](../parte1/datos_prueba.sql) |
 | Runner | [`parte1/run_all.sql`](../parte1/run_all.sql) · [`drop_all.sql`](../parte1/drop_all.sql) |
 
-## Parte 2 — Servicios Relacionales
+## Parte 2 - Servicios Relacionales
 
 | Criterio | Archivo |
 |---|---|
@@ -35,14 +35,14 @@ a los archivos del repositorio.
 | Triggers (validaciones no estructurales) | [`parte2/trg_*.sql`](../parte2/) |
 | Runner | [`parte2/00_ejecutar_todos.sql`](../parte2/00_ejecutar_todos.sql) |
 
-## Parte 3 — Consulta SQL + Plan de Ejecución
+## Parte 3 - Consulta SQL + Plan de Ejecución
 
 | Criterio | Archivo |
 |---|---|
 | Consulta (4+ tablas) | [`parte3/ConsultaParte3.sql`](../parte3/ConsultaParte3.sql) |
 | Plan + análisis | [`parte3/plan_explicado.txt`](../parte3/plan_explicado.txt) |
 
-## Parte 4 — MongoDB: diseño e integración
+## Parte 4 - MongoDB: diseño e integración
 
 | Criterio | Archivo |
 |---|---|
@@ -52,14 +52,14 @@ a los archivos del repositorio.
 | 4.5 Integración Oracle → Mongo (ETL) | [`parte4/03_integracion_oracle_mongo.js`](../parte4/03_integracion_oracle_mongo.js) |
 | Guía de pasaje Oracle → Mongo | [`parte4/guia_pasaje_oracle_mongo.md`](../parte4/guia_pasaje_oracle_mongo.md) |
 
-## Parte 5 — Consultas MongoDB (retornan colecciones)
+## Parte 5 - Consultas MongoDB (retornan colecciones)
 
 | Criterio | Archivo |
 |---|---|
 | 5.1 / 5.2 / 5.3 | [`parte5/consultas_parte5.js`](../parte5/consultas_parte5.js) |
 | Capturas de evidencia | [`Documentación/capturas/`](capturas/) |
 
-## Parte 6 — Reflexión MongoDB
+## Parte 6 - Reflexión MongoDB
 
 | Criterio | Archivo |
 |---|---|

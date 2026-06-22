@@ -1,4 +1,4 @@
-# Parte 6 — Reflexión sobre el modelado en MongoDB
+# Parte 6 - Reflexión sobre el modelado en MongoDB
 
 > Subsistema de analítica de comportamiento y trazabilidad de agentes (Parte 4).
 > Responde las tres preguntas de la consigna a partir del diseño efectivamente
@@ -15,14 +15,14 @@ directamente al modelo documental: **heterogeneidad estructural**, **dinamismo**
 (aparecerán tipos de evento no previstos) y **volumen alto con acceso
 analítico**. Sobre esa base aplicamos patrones concretos:
 
-### Polymorphic Pattern — colección `eventos`
+### Polymorphic Pattern: colección `eventos`
 Es el patrón central. Una única colección almacena documentos con estructuras
 distintas, discriminados por el campo `tipo_evento`. Los **cinco campos
 predefinidos** (`agente_id`, `tipo_agente`, `tipo_evento`, `criticidad`,
 `timestamp`) están en todos los documentos; la **parte variable** depende del
 tipo de evento.
 
-Ejemplo específico — el sub-documento `detalle` cambia de forma según el tipo:
+Ejemplo específico: el sub-documento `detalle` cambia de forma según el tipo:
 
 ```jsonc
 // tipo_evento: "decision"
@@ -53,7 +53,7 @@ proyección, sin ningún `$lookup`.
 También aplicamos **listas embebidas** donde la cardinalidad es acotada:
 `detalle.alternativas_evaluadas` y `detalle.etiquetas`.
 
-### Subset / Extended Reference Pattern — colección `agentes`
+### Subset / Extended Reference Pattern: colección `agentes`
 En lugar de volver a Oracle (o de duplicar el agente entero) en cada dashboard,
 `agentes` guarda un **subconjunto estable y de solo lectura** de cada agente:
 nombre, identificador, tipo, estado y un sub-objeto `usuario_admin` con el
@@ -137,7 +137,7 @@ fija la consigna; eso dejó mejoras concretas sobre la mesa:
 
 ### ¿Otro subsistema del obligatorio candidato a este modelo?
 
-Sí: el módulo de **contenido social — PUBLICACION + COMENTARIO + VOTO**.
+Sí: el módulo de **contenido social (PUBLICACION + COMENTARIO + VOTO)**.
 
 - Los **comentarios son jerárquicos** (un comentario responde a una publicación o
   a otro comentario). En el modelo relacional esto se resuelve con una FK

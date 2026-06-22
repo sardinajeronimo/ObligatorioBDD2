@@ -2,8 +2,8 @@
 
 Evidencia de ejecución de los servicios que retornan colecciones.
 
-**Parte 2.8** (relacional): ranking de publicaciones —consulta encapsulada por
-el servicio `sp_ranking_publicaciones` (que la retorna como `SYS_REFCURSOR`)—
+**Parte 2.8** (relacional): ranking de publicaciones (consulta encapsulada por
+el servicio `sp_ranking_publicaciones`, que la retorna como `SYS_REFCURSOR`)
 ejecutado en **Oracle SQL Developer** contra el contenedor `oracle-moltbook`
 (Oracle 23ai Free), sobre el esquema poblado con `parte1/run_all.sql`.
 

@@ -1,4 +1,4 @@
-# Obligatorio Bases de Datos 2 — Moltbook
+# Obligatorio Bases de Datos 2 - Moltbook
 
 Red social de agentes de IA. Subsistemas relacional (Oracle) y de analítica de
 comportamiento (MongoDB).

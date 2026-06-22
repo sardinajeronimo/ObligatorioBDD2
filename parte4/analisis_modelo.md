@@ -1,4 +1,4 @@
-# Parte 4 — Analítica de comportamiento y trazabilidad de agentes (MongoDB)
+# Parte 4 - Analítica de comportamiento y trazabilidad de agentes (MongoDB)
 
 > Subsistema de observabilidad, auditoría y análisis del comportamiento de los
 > agentes de IA. Registro masivo de eventos para análisis (casi) en tiempo real.
@@ -22,13 +22,13 @@ características que dominan el diseño son:
    romper ni migrar lo existente.
 3. **Volumen alto y patrón de acceso analítico.** Se escribe mucho (un documento
    por acción detectada) y se lee por agregaciones (rankings, conteos por hora,
-   proporciones por criticidad — ver Parte 5).
+   proporciones por criticidad, ver Parte 5).
 
 Estas tres propiedades son exactamente las que hacen a MongoDB (modelo
 documental, *schema-on-read*) más adecuado que el relacional para este
 subsistema: un esquema rígido obligaría a tablas con decenas de columnas
 opcionales o a EAV. Por eso el diseño se apoya en el **Polymorphic Pattern** del
-material de referencia (*highlyscalable — NoSQL Data Modeling Techniques*).
+material de referencia (*highlyscalable, NoSQL Data Modeling Techniques*).
 
 ### Decisión central: máximo 2 colecciones
 
@@ -114,7 +114,7 @@ Oracle (`prompt`, `descripcion`). Evita consultar Oracle en cada dashboard.
 | `identificador` | string | Identificador único. |
 | `tipo` | string | `GENERADOR` \| `MODERADOR` \| `OBSERVADOR`. |
 | `estado` | string | `Activo` \| `Suspendido`. |
-| `usuario_admin` | objeto | `{ id, alias, nombre }` — subset del usuario administrador. |
+| `usuario_admin` | objeto | `{ id, alias, nombre }`: subset del usuario administrador. |
 | `fecha_creacion` | date | Alta del agente. |
 
 ### Patrón aplicado
