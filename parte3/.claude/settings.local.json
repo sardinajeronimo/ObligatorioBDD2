@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sqlplus -S moltbook/moltbook123@localhost:1521/FREEPDB1)",
+      "Read(//opt/**)",
+      "Read(//Users/jeronimo/**)",
+      "Read(//usr/local/**)"
+    ]
+  }
+}
