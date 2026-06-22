@@ -19,6 +19,8 @@ MongoDB y la citación del uso de IA.
 | `parte3/` | Consulta SQL + plan de ejecución y su análisis |
 | `parte4/` | MongoDB: análisis, diseño de colecciones, validators e integración Oracle→Mongo |
 | `parte5/` | Consultas MongoDB (5.1, 5.2, 5.3) |
+| `parte6/` | Reflexión sobre el modelado en MongoDB |
+| `Documentación/` | Índice maestro de la entrega + capturas de evidencia (2.8 y Parte 5) |
 | `docs/` | Consigna y rúbrica |
 
 ## Cómo ejecutar
