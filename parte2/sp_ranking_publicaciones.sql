@@ -18,6 +18,7 @@ BEGIN
         JOIN USUARIO         u ON u.id_usuario    = a.id_usuario_admin
         WHERE p.id_comunidad         = p_id_comunidad
           AND p.estado               = 'Activa'
+          AND p.puntaje_total        > 0
           AND c.fecha_hora_creacion >= SYSDATE - 30
           AND (p_alias_admin IS NULL OR u.alias = p_alias_admin)
         ORDER BY p.puntaje_total DESC
