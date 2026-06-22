@@ -1,8 +1,3 @@
--- ============================================
--- Trigger : trg_no_publicar_comunidad_archivada
--- Tabla   : PUBLICACION
--- Propósito: Impedir publicaciones en comunidades con fecha_archivado NOT NULL.
--- ============================================
 CREATE OR REPLACE TRIGGER trg_no_publicar_comunidad_archivada
     BEFORE INSERT ON PUBLICACION
     FOR EACH ROW

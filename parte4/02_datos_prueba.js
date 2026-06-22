@@ -1,23 +1,8 @@
-// ============================================================
-// PARTE 4.4 - Datos de prueba (portable, NO requiere Oracle)
-// Base de datos: moltbook
-// Ejecutar DESPUES de 01_colecciones_validators.js:
-//   mongosh --file parte4/02_datos_prueba.js
-// ============================================================
-// Genera un volumen coherente con la BD relacional de la parte 1:
-//   * 9 agentes (los mismos ids/tipos que el seed Oracle)
-//   * eventos derivados de acciones (creacion/comentario/voto/moderacion)
-//   * eventos internos de runtime (decision/interaccion/error) de los
-//     ultimos 14 dias, para alimentar las consultas 5.1, 5.2 y 5.3.
-// Si se dispone de Oracle, usar en su lugar 03_integracion_oracle_mongo.js,
-// que produce exactamente los mismos documentos a partir de datos reales.
-// ============================================================
 
 const db = db.getSiblingDB("moltbook");
 db.eventos.deleteMany({});
 db.agentes.deleteMany({});
 
-// --- AGENTES (subset). Ids y tipos identicos al seed relacional. ---
 const AGENTES = [
   { _id: 1, ident: "genbot-alpha",  nombre: "GenBot Alpha", tipo: "GENERADOR",  estado: "Activo",      admin: { id: 1, alias: "ana_gomez",  nombre: "Ana Gomez"  } },
   { _id: 2, ident: "genbot-beta",   nombre: "GenBot Beta",  tipo: "GENERADOR",  estado: "Activo",      admin: { id: 2, alias: "carlos_d",   nombre: "Carlos Diaz"} },
@@ -34,7 +19,6 @@ db.agentes.insertMany(AGENTES.map(a => ({
   estado: a.estado, usuario_admin: a.admin, fecha_creacion: new Date("2026-04-01T12:00:00Z"),
 })));
 
-// --- Politica de criticidad (misma que el ETL) ---
 function criticidadDe(t) {
   return ({ error:"alta", moderacion:"alta", decision:"media", comentario:"media",
             creacion:"baja", voto:"baja", interaccion:"baja" })[t] || "media";
@@ -50,7 +34,6 @@ function tsHace(dias, hora) { const d = new Date(AHORA - dias*DIA); d.setHours(h
 const docs = [];
 const byId = Object.fromEntries(AGENTES.map(a => [a._id, a]));
 
-// --- Eventos derivados de ACCIONES (muestra representativa) ---
 docs.push(base(byId[1], "creacion", new Date("2026-05-20T10:00:00Z"),
   { contexto_operacional: { comunidad_id: 1, comunidad_nombre: "IA General", origen: "oracle" },
     detalle: { contenido_id: 1, titulo: "GPT-5 y el futuro de los LLMs" } }));
@@ -63,7 +46,6 @@ docs.push(base(byId[5], "moderacion", new Date("2026-05-25T16:45:00Z"),
   { contexto_operacional: { comunidad_id: 3, comunidad_nombre: "Etica en IA", origen: "oracle" },
     detalle: { contenido_id: 7, accion: "ocultar" } }));
 
-// --- Eventos INTERNOS de runtime por agente ---
 for (const a of AGENTES) {
   for (let i = 0; i < 3; i++) {
     docs.push(base(a, "decision", tsHace(rnd(10), 9 + rnd(8)), {

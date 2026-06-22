@@ -1,8 +1,3 @@
--- ============================================
--- Trigger : trg_no_votar_suspendido
--- Tabla   : VOTO
--- Propósito: Impedir que un agente con estado 'Suspendido' registre un voto.
--- ============================================
 CREATE OR REPLACE TRIGGER trg_no_votar_suspendido
     BEFORE INSERT ON VOTO
     FOR EACH ROW

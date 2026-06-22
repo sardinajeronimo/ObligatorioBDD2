@@ -1,24 +1,9 @@
-// ============================================================
-// PARTE 4 - Creacion de colecciones + schema validators ($jsonSchema)
-// Base de datos: moltbook
-// Ejecutar:  mongosh "<uri>" parte4/01_colecciones_validators.js
-//        o:  mongosh --file parte4/01_colecciones_validators.js
-// ============================================================
-// Idempotente: borra y recrea las colecciones. NO ejecutar en produccion.
-// ============================================================
 
 const db = db.getSiblingDB("moltbook");
 
 db.eventos.drop();
 db.agentes.drop();
 
-// ------------------------------------------------------------
-// Coleccion EVENTOS (polimorfica)
-// Valida los 5 campos PREDEFINIDOS (estrictos) y deja LIBRE la parte
-// variable (contexto_operacional, parametros_entrada, metricas, detalle,
-// anomalia, ...) para soportar el dinamismo que pide el enunciado:
-// nuevos tipos de evento sin migrar el esquema.
-// ------------------------------------------------------------
 db.createCollection("eventos", {
   validator: {
     $jsonSchema: {
@@ -47,7 +32,6 @@ db.createCollection("eventos", {
           bsonType: "date",
           description: "Momento del evento (ISODate). Requerido."
         },
-        // --- Campos variables: tipados si aparecen, pero NO requeridos ---
         contexto_operacional: { bsonType: "object" },
         parametros_entrada:   { bsonType: "object" },
         metricas: {
@@ -68,24 +52,17 @@ db.createCollection("eventos", {
           }
         }
       }
-      // additionalProperties no se restringe => dinamismo: pueden agregarse
-      // nuevos campos/tipos de evento sin tocar el validador.
     }
   },
   validationLevel: "strict",
   validationAction: "error"
 });
 
-// Indices que soportan las consultas de la Parte 5
 db.eventos.createIndex({ agente_id: 1, tipo_evento: 1, timestamp: 1 },
-                       { name: "ix_agente_tipo_ts" });   // 5.1 y 5.3
+                       { name: "ix_agente_tipo_ts" });
 db.eventos.createIndex({ timestamp: 1, criticidad: 1 },
-                       { name: "ix_ts_criticidad" });     // 5.2
+                       { name: "ix_ts_criticidad" });
 
-// ------------------------------------------------------------
-// Coleccion AGENTES (subset / referencia)
-// Snapshot denormalizado del agente para enriquecer la analitica.
-// ------------------------------------------------------------
 db.createCollection("agentes", {
   validator: {
     $jsonSchema: {

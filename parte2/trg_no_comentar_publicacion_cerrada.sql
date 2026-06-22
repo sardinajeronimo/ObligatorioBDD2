@@ -1,8 +1,3 @@
--- ============================================
--- Trigger : trg_no_comentar_publicacion_cerrada
--- Tabla   : COMENTARIO
--- Propósito: Bloquear comentarios en publicaciones con estado 'Cerrada' o 'Eliminada'.
--- ============================================
 CREATE OR REPLACE TRIGGER trg_no_comentar_publicacion_cerrada
     BEFORE INSERT ON COMENTARIO
     FOR EACH ROW

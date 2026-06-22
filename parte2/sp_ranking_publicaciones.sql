@@ -1,18 +1,3 @@
--- ============================================
--- PROCEDIMIENTO: Ranking de publicaciones por comunidad
--- Requerimiento: 2.8 (OBLIGATORIO)
--- Responsable: Jero
--- ============================================
--- Parámetros:
---   p_id_comunidad   ID de la comunidad a consultar
---   p_alias_admin    Alias del usuario admin del agente (opcional, NULL = sin filtro)
---   p_cursor         Cursor de salida con el ranking
--- ============================================
--- Resultado: top 10 publicaciones activas de los últimos 30 días,
---            ordenadas por puntaje_total DESC.
--- Columnas retornadas:
---   puntaje_total, titulo, fecha_hora_creacion, nombre_agente, alias_admin
--- ============================================
 
 CREATE OR REPLACE PROCEDURE sp_ranking_publicaciones(
     p_id_comunidad IN NUMBER,

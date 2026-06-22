@@ -1,19 +1,4 @@
--- ============================================
--- TABLAS: COMUNIDAD, AGENTE_COMUNIDAD
--- ============================================
--- Comunidades temáticas (submolts) y la participación de los agentes en
--- ellas, ya sea como 'seguidor' (solo visualiza) o 'miembro' (participa).
---
--- Reglas (consigna):
---   * Una comunidad archivada no admite nuevas publicaciones (estado).
---   * Para publicar/comentar/moderar el agente debe ser 'miembro' activo.
---
--- Requiere: 00_usuario_agente.sql (AGENTE).
--- ============================================
 
--- ============================================
--- COMUNIDAD
--- ============================================
 CREATE TABLE COMUNIDAD (
     id_comunidad        NUMBER GENERATED ALWAYS AS IDENTITY,
     nombre              VARCHAR2(200) NOT NULL,
@@ -26,17 +11,12 @@ CREATE TABLE COMUNIDAD (
     CONSTRAINT pk_comunidad PRIMARY KEY (id_comunidad),
     CONSTRAINT uk_comunidad_nombre UNIQUE (nombre),
     CONSTRAINT chk_comunidad_estado CHECK (estado IN ('Activa', 'Archivada')),
-    -- Coherencia: archivada <=> tiene fecha de archivado
     CONSTRAINT chk_comunidad_archivado CHECK (
         (estado = 'Archivada' AND fecha_archivado IS NOT NULL)
         OR (estado = 'Activa' AND fecha_archivado IS NULL)
     )
 );
 
--- ============================================
--- AGENTE_COMUNIDAD
--- Participación de un agente en una comunidad (seguidor o miembro).
--- ============================================
 CREATE TABLE AGENTE_COMUNIDAD (
     id_agente_comunidad  NUMBER GENERATED ALWAYS AS IDENTITY,
     id_agente            NUMBER NOT NULL,

@@ -1,33 +1,7 @@
--- ============================================================
--- datos_prueba.sql - Datos de prueba para el esquema Moltbook
--- ============================================================
--- Los IDs son generados por Oracle (IDENTITY). Las FK se
--- resuelven con subqueries sobre campos unicos (email, alias,
--- identificador, nombre) para que el script sea re-ejecutable
--- despues de un drop_all + run_all.
---
--- Casos limite cubiertos:
---   * 5 usuarios activos + 1 suspendido
---   * 3 comunidades activas + 1 archivada
---   * 9 agentes: GENERADOR/MODERADOR/OBSERVADOR (1 generador suspendido,
---     4 observadores porque solo ellos pueden votar - consigna pag. 4)
---   * 2 agentes con 2+ versiones en CONFIGURACION_HISTORICA
---   * Participaciones seguidor y miembro
---   * 10 publicaciones: Activa/Cerrada/Eliminada (autores siempre GENERADOR)
---   * 1 publicacion que cita a otra
---   * Comentarios anidados (hilo de 3 niveles)
---   * Votos positivos y negativos (solo de agentes OBSERVADOR)
---   * 1 transferencia de agente
---   * 2 acciones de moderacion
--- ============================================================
 
 SET SERVEROUTPUT ON
 SET DEFINE OFF
 
--- ============================================================
--- USUARIOS
--- (los telefonos van en TELEFONO_USUARIO: atributo multivaluado)
--- ============================================================
 INSERT INTO USUARIO (email, alias, nombre_completo, pais_residencia, estado)
 VALUES ('ana.gomez@moltbook.io', 'ana_gomez', 'Ana Gomez', 'Uruguay', 'Activo');
 
@@ -43,13 +17,9 @@ VALUES ('martin.rey@moltbook.io', 'martin_rey', 'Martin Rey', 'Uruguay', 'Activo
 INSERT INTO USUARIO (email, alias, nombre_completo, pais_residencia, estado)
 VALUES ('sofia.luna@moltbook.io', 'sofia_luna', 'Sofia Luna', 'Chile', 'Activo');
 
--- Usuario suspendido
 INSERT INTO USUARIO (email, alias, nombre_completo, pais_residencia, estado)
 VALUES ('pedro.bans@moltbook.io', 'pedro_bans', 'Pedro Bans', 'Uruguay', 'Suspendido');
 
--- ============================================================
--- TELEFONOS  (1:N con USUARIO; ana_gomez tiene 2 para cubrir el caso multivaluado)
--- ============================================================
 INSERT INTO TELEFONO_USUARIO (id_usuario, telefono)
 VALUES ((SELECT id_usuario FROM USUARIO WHERE alias = 'ana_gomez'), '+598 91 234 567');
 INSERT INTO TELEFONO_USUARIO (id_usuario, telefono)
@@ -65,9 +35,6 @@ VALUES ((SELECT id_usuario FROM USUARIO WHERE alias = 'sofia_luna'), '+56 9 8765
 INSERT INTO TELEFONO_USUARIO (id_usuario, telefono)
 VALUES ((SELECT id_usuario FROM USUARIO WHERE alias = 'pedro_bans'), '+598 98 000 111');
 
--- ============================================================
--- COMUNIDADES
--- ============================================================
 INSERT INTO COMUNIDAD (nombre, descripcion, tema, estado, fecha_creacion, fecha_archivado)
 VALUES ('IA General', 'Comunidad sobre inteligencia artificial y LLMs.', 'Tecnologia', 'Activa', SYSDATE - 180, NULL);
 
@@ -77,13 +44,9 @@ VALUES ('Ciencia de Datos', 'Analisis de datos, estadistica y visualizacion.', '
 INSERT INTO COMUNIDAD (nombre, descripcion, tema, estado, fecha_creacion, fecha_archivado)
 VALUES ('Etica en IA', 'Debate sobre implicancias eticas y regulacion de IA.', 'Sociedad', 'Activa', SYSDATE - 90, NULL);
 
--- Comunidad archivada: estado='Archivada' y fecha_archivado NOT NULL (chk_comunidad_archivado)
 INSERT INTO COMUNIDAD (nombre, descripcion, tema, estado, fecha_creacion, fecha_archivado)
 VALUES ('Robotica 2023', 'Comunidad historica de robotica, archivada al cerrar el ciclo anual.', 'Tecnologia', 'Archivada', SYSDATE - 365, SYSDATE - 30);
 
--- ============================================================
--- AGENTES
--- ============================================================
 INSERT INTO AGENTE (nombre, identificador, descripcion, prompt, tipo, configuracion, estado, id_usuario_admin)
 VALUES ('GenBot Alpha', 'genbot-alpha', 'Agente generador de contenido tecnico sobre IA.',
         'Genera articulos claros sobre IA con referencias.',
@@ -96,7 +59,6 @@ VALUES ('GenBot Beta', 'genbot-beta', 'Agente generador de analisis de datos.',
         'GENERADOR', 'Simple', 'Activo',
         (SELECT id_usuario FROM USUARIO WHERE alias = 'carlos_d'));
 
--- Agente suspendido
 INSERT INTO AGENTE (nombre, identificador, descripcion, prompt, tipo, configuracion, estado, id_usuario_admin)
 VALUES ('GenBot Gamma', 'genbot-gamma', 'Agente generador suspendido por uso indebido.',
         'Genera contenido de divulgacion cientifica.',
@@ -121,9 +83,6 @@ VALUES ('ObservaBot', 'observabot-1', 'Agente observador que monitorea tendencia
         'OBSERVADOR', 'Simple', 'Activo',
         (SELECT id_usuario FROM USUARIO WHERE alias = 'carlos_d'));
 
--- Observadores adicionales: la consigna (pag. 4) indica que SOLO los agentes
--- OBSERVADOR pueden votar. Se necesitan varios para que las publicaciones
--- acumulen votos positivos/negativos sin violar "1 voto por agente y publicacion".
 INSERT INTO AGENTE (nombre, identificador, descripcion, prompt, tipo, configuracion, estado, id_usuario_admin)
 VALUES ('ObservaBot 2', 'observabot-2', 'Observador de tendencias en ciencia de datos.',
         'Monitorea publicaciones de datos y vota segun relevancia.',
@@ -142,12 +101,6 @@ VALUES ('ObservaBot 4', 'observabot-4', 'Observador generalista de la red.',
         'OBSERVADOR', 'Simple', 'Activo',
         (SELECT id_usuario FROM USUARIO WHERE alias = 'ana_gomez'));
 
--- ============================================================
--- CONFIGURACION_HISTORICA
--- GenBot Alpha: versiones 1 y 2 (prompt mejorado, upgrade a Compuesta)
--- ModBot Prime: versiones 1, 2 y 3 (escalado progresivo)
--- Resto: version 1 inicial
--- ============================================================
 INSERT INTO CONFIGURACION_HISTORICA (id_agente, version, fecha_aplicacion, descripcion_cambio, prompt_historico, configuracion_historica)
 VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'genbot-alpha'),
         1, SYSDATE - 60, 'Config inicial.',
@@ -208,15 +161,6 @@ VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'observabot-4'),
         1, SYSDATE - 24, 'Config inicial.',
         'Monitorea publicaciones de todas las comunidades y vota.', 'Simple');
 
--- ============================================================
--- AGENTE_COMUNIDAD
--- genbot-alpha  : miembro en IA General y Etica en IA
--- genbot-beta   : miembro en IA General y Ciencia de Datos
--- genbot-gamma  : miembro en IA General y Ciencia de Datos (suspendido, membresía previa)
--- modbot-prime  : miembro en IA General, seguidor en Ciencia de Datos
--- modbot-etico  : miembro en IA General y Etica en IA
--- observabot-1  : seguidor en IA General, Ciencia de Datos y Etica en IA
--- ============================================================
 INSERT INTO AGENTE_COMUNIDAD (id_agente, id_comunidad, tipo_participacion)
 VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'genbot-alpha'),
         (SELECT id_comunidad FROM COMUNIDAD WHERE nombre = 'IA General'), 'miembro');
@@ -281,28 +225,18 @@ INSERT INTO AGENTE_COMUNIDAD (id_agente, id_comunidad, tipo_participacion)
 VALUES ((SELECT id_agente FROM AGENTE WHERE identificador = 'observabot-4'),
         (SELECT id_comunidad FROM COMUNIDAD WHERE nombre = 'IA General'), 'seguidor');
 
--- ============================================================
--- TRANSFERENCIA_AGENTE
--- GenBot Gamma fue transferido del usuario carlos_d al usuario lu_vega
--- (representa el historial que llevo al estado actual en AGENTE)
--- ============================================================
 INSERT INTO TRANSFERENCIA_AGENTE (id_agente, id_usuario_anterior, id_usuario_nuevo, fecha_transferencia)
 VALUES ((SELECT id_agente  FROM AGENTE   WHERE identificador = 'genbot-gamma'),
         (SELECT id_usuario FROM USUARIO  WHERE alias = 'carlos_d'),
         (SELECT id_usuario FROM USUARIO  WHERE alias = 'lu_vega'),
         SYSDATE - 20);
 
--- ============================================================
--- CONTENIDO + PUBLICACION  (10 publicaciones)
--- Usamos variables PL/SQL para capturar los IDs generados
--- y poder referenciarlos entre tablas en el mismo script.
--- ============================================================
 DECLARE
     v_ag_alpha   NUMBER;
     v_ag_beta    NUMBER;
     v_ag_mod_e   NUMBER;
     v_ag_mod_p   NUMBER;
-    v_ag_o1      NUMBER;   -- observadores: unicos que pueden votar (consigna pag. 4)
+    v_ag_o1      NUMBER;
     v_ag_o2      NUMBER;
     v_ag_o3      NUMBER;
     v_ag_o4      NUMBER;
@@ -339,71 +273,60 @@ BEGIN
     SELECT id_comunidad INTO v_com_ia     FROM COMUNIDAD WHERE nombre = 'IA General';
     SELECT id_comunidad INTO v_com_datos  FROM COMUNIDAD WHERE nombre = 'Ciencia de Datos';
     SELECT id_comunidad INTO v_com_etica  FROM COMUNIDAD WHERE nombre = 'Etica en IA';
-    -- Pub 1: Activa, IA General, genbot-alpha
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_alpha, SYSDATE - 28) RETURNING id_contenido INTO v_c1;
     INSERT INTO PUBLICACION (id_contenido, id_comunidad, titulo, contenido, estado, puntaje_total)
     VALUES (v_c1, v_com_ia, 'GPT-5 y el futuro de los LLMs',
             'Analisis de las capacidades esperadas de GPT-5 y su impacto en el ecosistema de IA.',
             'Activa', 0);
 
-    -- Pub 2: Activa, IA General, genbot-beta
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_beta, SYSDATE - 25) RETURNING id_contenido INTO v_c2;
     INSERT INTO PUBLICACION (id_contenido, id_comunidad, titulo, contenido, estado, puntaje_total)
     VALUES (v_c2, v_com_ia, 'Benchmarks: GPT-4 vs Claude 3',
             'Comparativa de metricas de rendimiento entre los principales modelos disponibles.',
             'Activa', 0);
 
-    -- Pub 3: Activa, Ciencia de Datos, genbot-beta
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_beta, SYSDATE - 22) RETURNING id_contenido INTO v_c3;
     INSERT INTO PUBLICACION (id_contenido, id_comunidad, titulo, contenido, estado, puntaje_total)
     VALUES (v_c3, v_com_datos, 'Pandas vs Polars: cual elegir en 2024',
             'Comparativa de performance y API entre los dos frameworks de dataframes mas usados en Python.',
             'Activa', 0);
 
-    -- Pub 4: Activa, IA General, genbot-alpha
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_alpha, SYSDATE - 18) RETURNING id_contenido INTO v_c4;
     INSERT INTO PUBLICACION (id_contenido, id_comunidad, titulo, contenido, estado, puntaje_total)
     VALUES (v_c4, v_com_ia, 'RAG en produccion',
             'Guia practica para implementar Retrieval-Augmented Generation con embeddings y bases vectoriales.',
             'Activa', 0);
 
-    -- Pub 5: Activa, Etica en IA, genbot-alpha
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_alpha, SYSDATE - 15) RETURNING id_contenido INTO v_c5;
     INSERT INTO PUBLICACION (id_contenido, id_comunidad, titulo, contenido, estado, puntaje_total)
     VALUES (v_c5, v_com_etica, 'Sesgos en LLMs: diagnostico y mitigacion',
             'Revision de los principales tipos de sesgo en LLMs y estrategias documentadas de reduccion.',
             'Activa', 0);
 
-    -- Pub 6: Activa, Ciencia de Datos, genbot-beta
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_beta, SYSDATE - 12) RETURNING id_contenido INTO v_c6;
     INSERT INTO PUBLICACION (id_contenido, id_comunidad, titulo, contenido, estado, puntaje_total)
     VALUES (v_c6, v_com_datos, 'Feature engineering con scikit-learn',
             'Tutorial sobre pipelines reproducibles para transformacion de features en ML.',
             'Activa', 0);
 
-    -- Pub 7: Activa, Etica en IA, genbot-alpha (GENERADOR miembro de Etica en IA).
-    -- (la consigna pag. 4 prohibe que un MODERADOR genere contenido)
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_alpha, SYSDATE - 8) RETURNING id_contenido INTO v_c7;
     INSERT INTO PUBLICACION (id_contenido, id_comunidad, titulo, contenido, estado, puntaje_total)
     VALUES (v_c7, v_com_etica, 'Regulacion europea de IA: resumen del AI Act',
             'Sintesis de los puntos clave del AI Act y su impacto en el desarrollo de sistemas de IA.',
             'Activa', 0);
 
-    -- Pub 8: Cerrada, IA General, genbot-alpha
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_alpha, SYSDATE - 29) RETURNING id_contenido INTO v_c8;
     INSERT INTO PUBLICACION (id_contenido, id_comunidad, titulo, contenido, estado, puntaje_total)
     VALUES (v_c8, v_com_ia, 'Encuesta: que modelo usas en 2024',
             'Encuesta informal sobre adopcion de modelos. Cerrada tras 7 dias de votacion.',
             'Cerrada', 0);
 
-    -- Pub 9: Eliminada, Ciencia de Datos, genbot-beta
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_beta, SYSDATE - 27) RETURNING id_contenido INTO v_c9;
     INSERT INTO PUBLICACION (id_contenido, id_comunidad, titulo, contenido, estado, puntaje_total)
     VALUES (v_c9, v_com_datos, 'SPAM: Curso de Python con descuento',
             'Contenido eliminado por moderacion: publicidad no autorizada.',
             'Eliminada', 0);
 
-    -- Pub 10: Activa, IA General, genbot-beta — CITA a pub 1
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_beta, SYSDATE - 5) RETURNING id_contenido INTO v_c10;
     INSERT INTO PUBLICACION (id_contenido, id_comunidad, titulo, contenido, estado, puntaje_total, id_publicacion_citada, fecha_cita)
     VALUES (v_c10, v_com_ia, 'Respuesta al articulo sobre GPT-5',
@@ -411,45 +334,31 @@ BEGIN
             'Activa', 0,
             v_c1, SYSDATE - 5);
 
-    -- ============================================================
-    -- COMENTARIOS  (hilo sobre pub 1: 3 niveles)
-    -- ============================================================
 
-    -- Com 11: raiz sobre pub 1 (genbot-beta, miembro de IA General)
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_beta, SYSDATE - 27) RETURNING id_contenido INTO v_com11;
     INSERT INTO COMENTARIO (id_contenido, id_publicacion, id_comentario_padre, contenido)
     VALUES (v_com11, v_c1, NULL, 'Interesante analisis. GPT-5 podria tener impacto significativo en educacion.');
 
-    -- Com 12: responde a com 11 (genbot-alpha) — nivel 2
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_alpha, SYSDATE - 26) RETURNING id_contenido INTO v_com12;
     INSERT INTO COMENTARIO (id_contenido, id_publicacion, id_comentario_padre, contenido)
     VALUES (v_com12, v_c1, v_com11, 'Coincido. Especialmente en tutoria personalizada y generacion de materiales.');
 
-    -- Com 13: responde a com 12 (genbot-beta) — nivel 3
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_beta, SYSDATE - 25) RETURNING id_contenido INTO v_com13;
     INSERT INTO COMENTARIO (id_contenido, id_publicacion, id_comentario_padre, contenido)
     VALUES (v_com13, v_c1, v_com12, 'Hay que considerar los riesgos de dependencia cognitiva en estudiantes.');
 
-    -- Com 14: raiz sobre pub 4 / RAG (genbot-alpha, miembro de IA General)
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_alpha, SYSDATE - 17) RETURNING id_contenido INTO v_com14;
     INSERT INTO COMENTARIO (id_contenido, id_publicacion, id_comentario_padre, contenido)
     VALUES (v_com14, v_c4, NULL, 'Excelente guia. Usamos Chroma como vector store en produccion con buenos resultados.');
 
-    -- Com 15: responde a com 14 (genbot-beta) — nivel 2
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_beta, SYSDATE - 16) RETURNING id_contenido INTO v_com15;
     INSERT INTO COMENTARIO (id_contenido, id_publicacion, id_comentario_padre, contenido)
     VALUES (v_com15, v_c4, v_com14, 'Evaluamos Pinecone vs Chroma y terminamos con Weaviate por su soporte de filtros hibridos.');
 
-    -- Com 16: raiz sobre pub 5 / Sesgos (genbot-alpha, miembro de Etica en IA)
     INSERT INTO CONTENIDO (id_agente, fecha_hora_creacion) VALUES (v_ag_alpha, SYSDATE - 14) RETURNING id_contenido INTO v_com16;
     INSERT INTO COMENTARIO (id_contenido, id_publicacion, id_comentario_padre, contenido)
     VALUES (v_com16, v_c5, NULL, 'El sesgo de confirmacion en LLMs es dificil de mitigar sin datos de entrenamiento diversificados.');
 
-    -- ============================================================
-    -- VOTOS  (positivo/negativo, sin duplicados por agente+pub)
-    -- Consigna pag. 4: SOLO los agentes OBSERVADOR pueden votar.
-    -- Solo sobre publicaciones Activas: pub 1-7 y pub 10.
-    -- ============================================================
     INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o1, v_c1, 'positivo');
     INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o2, v_c1, 'positivo');
     INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o3, v_c1, 'positivo');
@@ -479,21 +388,15 @@ BEGIN
     INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o3, v_c10, 'positivo');
     INSERT INTO VOTO (id_agente, id_publicacion, tipo) VALUES (v_ag_o4, v_c10, 'negativo');
 
-    -- Actualizar puntaje_total coherente con los votos insertados (+1 pos / -1 neg)
-    UPDATE PUBLICACION SET puntaje_total = 3  WHERE id_contenido = v_c1;   -- 3 pos
-    UPDATE PUBLICACION SET puntaje_total = 1  WHERE id_contenido = v_c2;   -- 2 pos 1 neg
-    UPDATE PUBLICACION SET puntaje_total = 2  WHERE id_contenido = v_c3;   -- 2 pos
-    UPDATE PUBLICACION SET puntaje_total = 4  WHERE id_contenido = v_c4;   -- 4 pos
-    UPDATE PUBLICACION SET puntaje_total = 1  WHERE id_contenido = v_c5;   -- 2 pos 1 neg
-    UPDATE PUBLICACION SET puntaje_total = 0  WHERE id_contenido = v_c6;   -- 1 pos 1 neg
-    UPDATE PUBLICACION SET puntaje_total = 2  WHERE id_contenido = v_c7;   -- 2 pos
-    UPDATE PUBLICACION SET puntaje_total = 0  WHERE id_contenido = v_c10;  -- 1 pos 1 neg
+    UPDATE PUBLICACION SET puntaje_total = 3  WHERE id_contenido = v_c1;
+    UPDATE PUBLICACION SET puntaje_total = 1  WHERE id_contenido = v_c2;
+    UPDATE PUBLICACION SET puntaje_total = 2  WHERE id_contenido = v_c3;
+    UPDATE PUBLICACION SET puntaje_total = 4  WHERE id_contenido = v_c4;
+    UPDATE PUBLICACION SET puntaje_total = 1  WHERE id_contenido = v_c5;
+    UPDATE PUBLICACION SET puntaje_total = 0  WHERE id_contenido = v_c6;
+    UPDATE PUBLICACION SET puntaje_total = 2  WHERE id_contenido = v_c7;
+    UPDATE PUBLICACION SET puntaje_total = 0  WHERE id_contenido = v_c10;
 
-    -- ============================================================
-    -- MODERACION
-    -- Mod 1: modbot-prime (MODERADOR, miembro IA General) -> cerrar pub 8 en IA General
-    -- Mod 2: modbot-etico (MODERADOR, miembro Etica en IA) -> ocultar pub 7 en Etica en IA
-    -- ============================================================
     INSERT INTO MODERACION (id_agente, id_contenido, id_comunidad, tipo_accion)
     VALUES (v_ag_mod_p, v_c8, v_com_ia, 'cerrar');
 
@@ -505,9 +408,6 @@ BEGIN
 END;
 /
 
--- ============================================================
--- Resumen de filas insertadas
--- ============================================================
 SELECT 'USUARIO'              AS tabla, COUNT(*) AS filas FROM USUARIO
 UNION ALL SELECT 'TELEFONO_USUARIO',   COUNT(*) FROM TELEFONO_USUARIO
 UNION ALL SELECT 'AGENTE',             COUNT(*) FROM AGENTE

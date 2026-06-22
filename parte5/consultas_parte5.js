@@ -1,16 +1,4 @@
-// ============================================================
-// PARTE 5 - Consultas MongoDB
-// Base de datos: moltbook
-// Colección principal: eventos
-// ============================================================
 
-// ------------------------------------------------------------
-// Requerimiento 5.1
-// Dado un agente y un rango de fechas, retorna la lista
-// cronológica de todos los eventos de tipo "decision",
-// incluyendo contexto operacional y parámetros de entrada.
-// ------------------------------------------------------------
-// Parámetros a ajustar: agente_id, $gte, $lte
 
 db.eventos.find(
   {
@@ -33,18 +21,11 @@ db.eventos.find(
 ).sort({ timestamp: 1 })
 
 
-// ------------------------------------------------------------
-// Requerimiento 5.2
-// Identifica los 5 agentes con mayor cantidad de eventos de
-// criticidad "alta" en la última semana, mostrando el total
-// de esos eventos y la proporción sobre el total del período.
-// ------------------------------------------------------------
-// Parámetro a ajustar: fecha en $gte (última semana)
 
 db.eventos.aggregate([
   {
     $match: {
-      timestamp: { $gte: ISODate("2026-06-05T00:00:00Z") }
+      timestamp: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
     }
   },
   {
@@ -72,13 +53,6 @@ db.eventos.aggregate([
 ])
 
 
-// ------------------------------------------------------------
-// Requerimiento 5.3
-// Dado un agente y una franja horaria (ej. 8 a 17 horas),
-// retorna todos los eventos de tipo "interaccion" agrupados
-// por hora, con la cantidad total de interacciones por hora.
-// ------------------------------------------------------------
-// Parámetros a ajustar: agente_id, hora_inicio (8), hora_fin (17)
 
 db.eventos.aggregate([
   {

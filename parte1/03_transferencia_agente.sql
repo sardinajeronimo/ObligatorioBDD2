@@ -1,17 +1,3 @@
--- ============================================
--- TABLA: TRANSFERENCIA_AGENTE
--- Parte 2 — Req 2.2: Historial de transferencias de administración
--- Responsable: Jeronimo
--- ============================================
--- Supuestos:
---   * Cada fila es inmutable: registra quién tenía el agente antes y
---     quién lo recibió, con la fecha de la operación.
---   * No se permite UPDATE ni DELETE sobre esta tabla (invariante de
---     auditoría); se recomienda revocar esos privilegios en producción.
---   * id_usuario_anterior y id_usuario_nuevo referencian USUARIO sin
---     acción de delete: la BD rechaza borrar un usuario que aparezca
---     en el historial, preservando la integridad del registro de auditoría.
--- ============================================
 
 CREATE TABLE TRANSFERENCIA_AGENTE (
     id_transferencia    NUMBER GENERATED ALWAYS AS IDENTITY,

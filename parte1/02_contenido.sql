@@ -1,30 +1,4 @@
--- ============================================
--- TABLAS: CONTENIDO, PUBLICACION, COMENTARIO, VOTO, MODERACION
--- ============================================
--- Modelo de la generalización CONTENIDO descrita en la consigna (pág. 5):
--- "se entiende por contenido a toda unidad de información generada por los
---  agentes... los contenidos se clasifican en Publicaciones y Comentarios,
---  que comparten características comunes".
---
--- Implementación supertipo/subtipo:
---   CONTENIDO    : entidad base (id único, fecha/hora de creación, agente autor).
---   PUBLICACION  : subtipo, comparte PK con CONTENIDO (id_contenido).
---   COMENTARIO   : subtipo, comparte PK con CONTENIDO (id_contenido).
--- VOTO recae sobre PUBLICACION; MODERACION recae sobre CONTENIDO (pub o com).
---
--- Supuestos:
---   * El voto solo aplica a publicaciones (la consigna nunca menciona votos
---     sobre comentarios).
---   * Un agente vota a lo sumo una vez la misma publicación.
---   * Las publicaciones eliminadas no se borran: pasan a estado 'Eliminada'.
---   * Una publicación puede citar a otra (id_publicacion_citada + fecha_cita).
---
--- Requiere: 00_usuario_agente.sql (AGENTE), 01_comunidad.sql (COMUNIDAD).
--- ============================================
 
--- ============================================
--- CONTENIDO  (supertipo)
--- ============================================
 CREATE TABLE CONTENIDO (
     id_contenido        NUMBER GENERATED ALWAYS AS IDENTITY,
     id_agente           NUMBER NOT NULL,
@@ -37,9 +11,6 @@ CREATE TABLE CONTENIDO (
 
 CREATE INDEX ix_contenido_agente ON CONTENIDO(id_agente);
 
--- ============================================
--- PUBLICACION  (subtipo de CONTENIDO)
--- ============================================
 CREATE TABLE PUBLICACION (
     id_contenido            NUMBER NOT NULL,
     id_comunidad            NUMBER NOT NULL,
@@ -59,8 +30,6 @@ CREATE TABLE PUBLICACION (
         REFERENCES PUBLICACION(id_contenido),
     CONSTRAINT chk_pub_estado CHECK (estado IN ('Activa', 'Cerrada', 'Eliminada')),
     CONSTRAINT chk_pub_titulo_nv CHECK (LENGTH(TRIM(titulo)) > 0),
-    -- (CLOB no-vacío no se puede validar por CHECK: requiere trigger; NOT NULL alcanza)
-    -- Cita: o ambas columnas presentes, o ninguna
     CONSTRAINT chk_pub_cita CHECK (
         (id_publicacion_citada IS NULL AND fecha_cita IS NULL)
         OR (id_publicacion_citada IS NOT NULL AND fecha_cita IS NOT NULL)
@@ -71,10 +40,6 @@ CREATE TABLE PUBLICACION (
 CREATE INDEX ix_pub_comunidad ON PUBLICACION(id_comunidad);
 CREATE INDEX ix_pub_estado    ON PUBLICACION(estado);
 
--- ============================================
--- COMENTARIO  (subtipo de CONTENIDO)
--- Responde a una publicación o a otro comentario (hilo jerárquico).
--- ============================================
 CREATE TABLE COMENTARIO (
     id_contenido        NUMBER NOT NULL,
     id_publicacion      NUMBER NOT NULL,
@@ -94,10 +59,6 @@ CREATE TABLE COMENTARIO (
 CREATE INDEX ix_com_publicacion ON COMENTARIO(id_publicacion);
 CREATE INDEX ix_com_padre       ON COMENTARIO(id_comentario_padre);
 
--- ============================================
--- VOTO  (sobre PUBLICACION)
--- Un agente vota a lo sumo una vez la misma publicación (UNIQUE).
--- ============================================
 CREATE TABLE VOTO (
     id_voto         NUMBER GENERATED ALWAYS AS IDENTITY,
     id_agente       NUMBER NOT NULL,
@@ -116,10 +77,6 @@ CREATE TABLE VOTO (
 
 CREATE INDEX ix_voto_publicacion ON VOTO(id_publicacion);
 
--- ============================================
--- MODERACION  (sobre CONTENIDO: publicación o comentario)
--- Depende del agente moderador, del contenido y de la comunidad.
--- ============================================
 CREATE TABLE MODERACION (
     id_moderacion   NUMBER GENERATED ALWAYS AS IDENTITY,
     id_agente       NUMBER NOT NULL,

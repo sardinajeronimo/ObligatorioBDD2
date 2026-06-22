@@ -1,12 +1,3 @@
--- ============================================================
--- 00_ejecutar_todos.sql — Compila TODOS los servicios de la Parte 2.
--- ============================================================
--- Ejecutar desde SQL*Plus conectado a moltbook@localhost:1521/FREEPDB1
--- o abrir cada archivo por separado en SQL Developer / DBeaver.
---
--- Requiere: el esquema de la Parte 1 ya creado (parte1/run_all.sql).
--- Los paths son relativos a la ubicacion de este script (@@).
--- ============================================================
 SET SERVEROUTPUT ON
 SET DEFINE OFF
 
@@ -27,9 +18,6 @@ PROMPT ===== TRIGGERS (validaciones no estructurales) =====
 @@trg_no_publicar_comunidad_archivada.sql
 @@trg_no_comentar_publicacion_cerrada.sql
 
--- ============================================================
--- Verificacion de compilacion: no debe quedar nada INVALID.
--- ============================================================
 PROMPT ===== ESTADO DE PROCEDIMIENTOS =====
 SELECT object_name, status
   FROM user_objects

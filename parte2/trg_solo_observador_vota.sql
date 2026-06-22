@@ -1,8 +1,3 @@
--- ============================================
--- Trigger : trg_solo_observador_vota
--- Tabla   : VOTO
--- Propósito: Permitir votar únicamente a agentes de tipo 'OBSERVADOR'.
--- ============================================
 CREATE OR REPLACE TRIGGER trg_solo_observador_vota
     BEFORE INSERT ON VOTO
     FOR EACH ROW

@@ -1,12 +1,3 @@
--- ============================================
--- drop_all.sql — Borra todas las tablas del esquema (reset).
--- ============================================
--- Útil para reejecutar run_all.sql desde cero sin errores de
--- "ORA-00955: nombre ya utilizado".
---
--- CASCADE CONSTRAINTS permite borrar sin importar el orden de las FKs.
--- El bloque ignora las tablas que no existan, así que es idempotente.
--- ============================================
 SET SERVEROUTPUT ON
 BEGIN
     FOR t IN (

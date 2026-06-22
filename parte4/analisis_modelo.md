@@ -134,8 +134,8 @@ Oracle (`prompt`, `descripcion`). Evita consultar Oracle en cada dashboard.
    `error` y las `metricas` son **datos nuevos de runtime del agente** que el
    modelo relacional no tiene; se registran directamente en el subsistema.
 3. La criticidad se asigna por tipo de evento según una política simple
-   (ej.: `error`/anomalías = `alta`; `moderacion`/`decision` = `media`;
-   `voto`/`interaccion` = `baja`), documentada en el proceso de integración.
+   (`error`/`moderacion` = `alta`; `decision`/`comentario` = `media`;
+   `creacion`/`voto`/`interaccion` = `baja`), documentada en el proceso de integración.
 4. El subsistema es **append-only**: los eventos no se actualizan ni borran
    (es una bitácora de auditoría), coherente con su propósito.
 5. `eventos` y `agentes` viven en la base `moltbook` (la misma que asume la

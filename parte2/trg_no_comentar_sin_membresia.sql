@@ -1,9 +1,3 @@
--- ============================================
--- Trigger : trg_no_comentar_sin_membresia
--- Tabla   : COMENTARIO
--- Propósito: Bloquear comentarios de agentes que no sean 'miembro' activo
---            de la comunidad a la que pertenece la publicación.
--- ============================================
 CREATE OR REPLACE TRIGGER trg_no_comentar_sin_membresia
     BEFORE INSERT ON COMENTARIO
     FOR EACH ROW
@@ -12,7 +6,6 @@ DECLARE
     v_comunidad PUBLICACION.id_comunidad%TYPE;
     v_agente    CONTENIDO.id_agente%TYPE;
 BEGIN
-    -- Obtener la comunidad de la publicación y el agente autor del comentario
     SELECT p.id_comunidad, c.id_agente
       INTO v_comunidad, v_agente
       FROM PUBLICACION p

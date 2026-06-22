@@ -1,21 +1,3 @@
-// ============================================================
-// PARTE 4.5 - Proceso de integracion Oracle -> MongoDB
-// ============================================================
-// Lee las ACCIONES detectadas en la base relacional (Oracle) y genera un
-// documento de evento por cada una en la coleccion `eventos`. Ademas:
-//   * Pobla la coleccion `agentes` (subset) desde AGENTE + USUARIO.
-//   * Genera los eventos INTERNOS de runtime (decision / interaccion / error)
-//     que NO existen en el modelo relacional, para alimentar la analitica.
-//
-// Tecnologia: Node.js + oracledb (modo Thin, sin Oracle Client) + driver mongodb.
-//   npm install oracledb mongodb
-//
-// Config por variables de entorno (con defaults para el entorno local):
-//   ORA_USER, ORA_PASS, ORA_CONN   (ej. localhost:11521/FREEPDB1)
-//   MONGO_URI                      (ej. mongodb://localhost:27017)
-//
-// Ejecutar:  node parte4/03_integracion_oracle_mongo.js
-// ============================================================
 
 const oracledb = require("oracledb");
 const { MongoClient } = require("mongodb");
@@ -28,23 +10,13 @@ const ORA = {
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017";
 
 oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
-oracledb.fetchAsString = [oracledb.CLOB];   // CLOBs como string
+oracledb.fetchAsString = [oracledb.CLOB];
 
-// --- Politica de criticidad por tipo de evento (documentada y centralizada) ---
 function criticidadDe(tipoEvento) {
-  switch (tipoEvento) {
-    case "error":      return "alta";
-    case "moderacion": return "alta";
-    case "decision":   return "media";
-    case "comentario": return "media";
-    case "creacion":   return "baja";
-    case "voto":       return "baja";
-    case "interaccion":return "baja";
-    default:           return "media";
-  }
+  return ({ error: "alta", moderacion: "alta", decision: "media", comentario: "media",
+            creacion: "baja", voto: "baja", interaccion: "baja" })[tipoEvento] || "media";
 }
 
-// Helper: arma el documento base comun a todo evento
 function eventoBase(agente, tipoEvento, ts, extra) {
   return Object.assign({
     agente_id:   agente.ID_AGENTE,
@@ -63,9 +35,6 @@ async function main() {
   const eventos = db.collection("eventos");
   const agentes = db.collection("agentes");
 
-  // ============================================================
-  // 1) AGENTES (subset / referencia) desde AGENTE + USUARIO
-  // ============================================================
   const ags = (await ora.execute(`
     SELECT a.id_agente, a.nombre, a.identificador, a.tipo, a.estado,
            a.fecha_creacion,
@@ -84,18 +53,13 @@ async function main() {
   })));
   console.log(`agentes: ${ags.length} documentos`);
 
-  // mapa id_agente -> {ID_AGENTE, TIPO} para armar eventos
   const agById = {};
   ags.forEach(a => { agById[a.ID_AGENTE] = { ID_AGENTE: a.ID_AGENTE, TIPO: a.TIPO }; });
 
   await eventos.deleteMany({});
   const docs = [];
 
-  // ============================================================
-  // 2) EVENTOS derivados de ACCIONES en Oracle
-  // ============================================================
 
-  // 2a) Publicaciones -> tipo_evento "creacion"
   const pubs = (await ora.execute(`
     SELECT c.id_agente, c.fecha_hora_creacion AS ts, p.id_contenido, p.titulo,
            p.id_comunidad, com.nombre AS comunidad
@@ -109,7 +73,6 @@ async function main() {
     }));
   }
 
-  // 2b) Comentarios -> "comentario"
   const coms = (await ora.execute(`
     SELECT c.id_agente, c.fecha_hora_creacion AS ts, cm.id_contenido,
            cm.id_publicacion, p.id_comunidad, com.nombre AS comunidad
@@ -124,7 +87,6 @@ async function main() {
     }));
   }
 
-  // 2c) Votos -> "voto"
   const votos = (await ora.execute(`
     SELECT v.id_agente, v.fecha_hora AS ts, v.id_publicacion, v.tipo
       FROM VOTO v`)).rows;
@@ -134,7 +96,6 @@ async function main() {
     }));
   }
 
-  // 2d) Moderaciones -> "moderacion" (criticidad alta)
   const mods = (await ora.execute(`
     SELECT m.id_agente, m.fecha_hora AS ts, m.id_contenido, m.id_comunidad,
            m.tipo_accion, com.nombre AS comunidad
@@ -146,7 +107,6 @@ async function main() {
     }));
   }
 
-  // 2e) Cambios de configuracion -> "decision" (la evolucion del agente)
   const cfgs = (await ora.execute(`
     SELECT ch.id_agente, ch.fecha_aplicacion AS ts, ch.version,
            ch.configuracion_historica AS config, ch.descripcion_cambio
@@ -158,11 +118,6 @@ async function main() {
     }));
   }
 
-  // ============================================================
-  // 3) EVENTOS INTERNOS de runtime (no existen en Oracle)
-  //    decision / interaccion / error + metricas. Distribuidos en los
-  //    ultimos 14 dias para alimentar las consultas 5.1, 5.2 y 5.3.
-  // ============================================================
   const ahora = Date.now();
   const DIA = 24 * 60 * 60 * 1000;
   function tsHace(dias, hora) {
@@ -174,7 +129,6 @@ async function main() {
 
   for (const a of ags) {
     const ag = { ID_AGENTE: a.ID_AGENTE, TIPO: a.TIPO };
-    // decisiones internas: 3 por agente en los ultimos 10 dias
     for (let i = 0; i < 3; i++) {
       docs.push(eventoBase(ag, "decision", tsHace(rnd(10), 9 + rnd(8)), {
         contexto_operacional: { sesion_id: "s-" + a.ID_AGENTE + "-" + i, origen: "runtime" },
@@ -190,7 +144,6 @@ async function main() {
         metricas: { tiempo_respuesta_ms: 200 + rnd(800), tokens_procesados: 300 + rnd(700), uso_memoria_mb: 50 + rnd(150) },
       }));
     }
-    // interacciones con usuario: 4 por agente, en franja 8-17h, ultimos 7 dias
     for (let i = 0; i < 4; i++) {
       docs.push(eventoBase(ag, "interaccion", tsHace(rnd(7), 8 + rnd(10)), {
         contexto_operacional: { sesion_id: "s-" + a.ID_AGENTE + "-i" + i, origen: "runtime" },
@@ -199,7 +152,6 @@ async function main() {
         metricas: { tiempo_respuesta_ms: 150 + rnd(500), tokens_procesados: 80 + rnd(300) },
       }));
     }
-    // errores/anomalias (criticidad alta) en la ultima semana: 0..2 por agente
     const nErr = rnd(3);
     for (let i = 0; i < nErr; i++) {
       docs.push(eventoBase(ag, "error", tsHace(rnd(7), rnd(24)), {
@@ -209,9 +161,6 @@ async function main() {
     }
   }
 
-  // ============================================================
-  // 4) Insercion masiva
-  // ============================================================
   const res = await eventos.insertMany(docs);
   console.log(`eventos: ${res.insertedCount} documentos insertados`);
   console.log("Distribucion por tipo_evento:");

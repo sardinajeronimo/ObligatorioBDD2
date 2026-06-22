@@ -1,44 +1,18 @@
--- ============================================
--- PROCEDIMIENTO: sp_emitir_voto
--- Parte 2 — Req 2.4: Emitir voto sobre una publicación
--- Responsable: Jero
--- ============================================
--- Registra un voto (positivo/negativo) de un agente sobre una publicación
--- y actualiza el puntaje_total de la publicación (+1 positivo, -1 negativo).
---
--- Esquema: VOTO referencia PUBLICACION por su PK id_contenido
---          (PUBLICACION es subtipo de CONTENIDO, ver scripts/ddl/02_contenido.sql).
---
--- Parámetros:
---   p_id_agente      Agente que vota (debe existir y estar Activo)
---   p_id_publicacion PK de la publicación (= CONTENIDO.id_contenido)
---   p_tipo           'positivo' | 'negativo'
---
--- Errores de aplicación:
---   -20010  El agente no existe
---   -20011  El agente no está Activo
---   -20012  La publicación no existe
---   -20013  Tipo de voto inválido
---   -20014  El agente ya votó esa publicación
---   -20015  El agente no es de tipo OBSERVADOR (solo observadores votan)
--- ============================================
 
 CREATE OR REPLACE PROCEDURE sp_emitir_voto(
     p_id_agente      NUMBER,
     p_id_publicacion NUMBER,
-    p_tipo           VARCHAR2   -- 'positivo' o 'negativo'
+    p_tipo           VARCHAR2
 ) AS
     v_estado_agente AGENTE.estado%TYPE;
     v_tipo_agente   AGENTE.tipo%TYPE;
-    v_existe        NUMBER;
+    v_cantidad      NUMBER;
     v_delta         NUMBER;
 BEGIN
-    -- Validar tipo de voto antes de ir a la BD
     IF p_tipo NOT IN ('positivo', 'negativo') THEN
         RAISE_APPLICATION_ERROR(-20013, 'Tipo de voto invalido. Usar: positivo o negativo');
     END IF;
 
-    -- Validar que el agente exista; traer estado y tipo
     BEGIN
         SELECT estado, tipo INTO v_estado_agente, v_tipo_agente
           FROM AGENTE
@@ -53,37 +27,32 @@ BEGIN
             'Agente ' || p_id_agente || ' no esta activo (estado: ' || v_estado_agente || ')');
     END IF;
 
-    -- Solo los agentes OBSERVADOR pueden votar (consigna pág. 4)
     IF v_tipo_agente <> 'OBSERVADOR' THEN
         RAISE_APPLICATION_ERROR(-20015,
             'Agente ' || p_id_agente || ' no es OBSERVADOR (tipo: ' || v_tipo_agente ||
             '); solo los observadores pueden votar');
     END IF;
 
-    -- Validar que la publicación exista
-    SELECT COUNT(*) INTO v_existe
+    SELECT COUNT(*) INTO v_cantidad
       FROM PUBLICACION
      WHERE id_contenido = p_id_publicacion;
 
-    IF v_existe = 0 THEN
+    IF v_cantidad = 0 THEN
         RAISE_APPLICATION_ERROR(-20012, 'Publicacion ' || p_id_publicacion || ' no existe');
     END IF;
 
-    -- Validar voto duplicado (un agente vota a lo sumo una vez la misma publicación)
-    SELECT COUNT(*) INTO v_existe
+    SELECT COUNT(*) INTO v_cantidad
       FROM VOTO
      WHERE id_agente = p_id_agente AND id_publicacion = p_id_publicacion;
 
-    IF v_existe > 0 THEN
+    IF v_cantidad > 0 THEN
         RAISE_APPLICATION_ERROR(-20014,
             'Agente ' || p_id_agente || ' ya voto en la publicacion ' || p_id_publicacion);
     END IF;
 
-    -- Insertar voto
     INSERT INTO VOTO (id_agente, id_publicacion, tipo, fecha_hora)
     VALUES (p_id_agente, p_id_publicacion, p_tipo, SYSDATE);
 
-    -- Actualizar puntaje_total (+1 positivo, -1 negativo)
     v_delta := CASE p_tipo WHEN 'positivo' THEN 1 ELSE -1 END;
 
     UPDATE PUBLICACION
@@ -103,9 +72,3 @@ EXCEPTION
 END sp_emitir_voto;
 /
 
--- ============================================
--- Ejemplo de uso (requiere datos de prueba cargados):
---   SET SERVEROUTPUT ON;
---   BEGIN sp_emitir_voto(1, 1, 'positivo'); END;
---   /
--- ============================================
