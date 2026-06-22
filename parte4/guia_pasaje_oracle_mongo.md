@@ -55,7 +55,7 @@ instancia MongoDB accesible.
 mongosh "<MONGO_URI>" --file parte4/01_colecciones_validators.js
 
 # 2a) Poblar DESDE ORACLE (recomendado: datos reales)
-export ORA_USER=MOLTBOOK ORA_PASS=moltbook ORA_CONN=localhost:11521/FREEPDB1
+export ORA_USER=MOLTBOOK ORA_PASS=moltbook ORA_CONN=localhost:1521/FREEPDB1
 export MONGO_URI=mongodb://localhost:27017
 node parte4/03_integracion_oracle_mongo.js
 

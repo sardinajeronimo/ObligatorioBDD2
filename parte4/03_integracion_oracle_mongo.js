@@ -5,7 +5,7 @@ const { MongoClient } = require("mongodb");
 const ORA = {
   user:          process.env.ORA_USER || "MOLTBOOK",
   password:      process.env.ORA_PASS || "moltbook",
-  connectString: process.env.ORA_CONN || "localhost:11521/FREEPDB1",
+  connectString: process.env.ORA_CONN || "localhost:1521/FREEPDB1",
 };
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017";
 
